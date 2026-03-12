@@ -16,7 +16,7 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-from ..utils.config_loader import Config
+from utils.config_loader import Config
 
 # Setup logging
 logging.basicConfig(
