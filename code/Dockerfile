@@ -16,18 +16,6 @@ FROM python:3.10-slim
 # Build arguments for NOVA installation
 ARG NOVA_MODE=none
 
-# Configure Chinese mirror sources (fix network issues in China)
-RUN rm -f /etc/apt/sources.list.d/debian.sources && \
-    echo "Types: deb" > /etc/apt/sources.list.d/debian.sources && \
-    echo "URIs: https://mirrors.ustc.edu.cn/debian https://repo.huaweicloud.com/debian" >> /etc/apt/sources.list.d/debian.sources && \
-    echo "Suites: bookworm bookworm-updates" >> /etc/apt/sources.list.d/debian.sources && \
-    echo "Components: main contrib non-free non-free-firmware" >> /etc/apt/sources.list.d/debian.sources && \
-    echo "" >> /etc/apt/sources.list.d/debian.sources && \
-    echo "Types: deb" >> /etc/apt/sources.list.d/debian.sources && \
-    echo "URIs: https://mirrors.ustc.edu.cn/debian-security https://repo.huaweicloud.com/debian-security" >> /etc/apt/sources.list.d/debian.sources && \
-    echo "Suites: bookworm-security" >> /etc/apt/sources.list.d/debian.sources && \
-    echo "Components: main contrib non-free non-free-firmware" >> /etc/apt/sources.list.d/debian.sources
-
 # Install system dependencies (merged layers for faster build)
 RUN apt-get update && \
     apt-get install -y --no-install-recommends \
@@ -66,7 +54,7 @@ RUN if [ "$NOVA_MODE" != "none" ]; then \
 COPY nova-requirements.txt /tmp/nova-requirements.txt
 RUN if [ "$NOVA_MODE" = "full" ]; then \
     echo "Installing NOVA ML dependencies (this may take a while)..."; \
-    pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple -r /tmp/nova-requirements.txt; \
+    pip install --no-cache-dir -i https://pypi.org/simple -r /tmp/nova-requirements.txt; \
     fi
 
 # Copy NOVA hooks (installed in lite and full modes)
