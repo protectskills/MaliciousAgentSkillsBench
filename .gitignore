@@ -1,0 +1,26 @@
+# env
+.env
+.env.*
+*.env
+
+# python
+__pycache__/
+*.pyc
+
+# virtual envs
+.venv/
+venv/
+env/
+
+# generated datasets
+code/data/
+code/scan_results/
+code/tasks/
+code/workspace/
+
+# local scanner repo
+code/scanner/skill-security-scan/
+
+# misc
+.ipynb_checkpoints/
+.DS_Store
