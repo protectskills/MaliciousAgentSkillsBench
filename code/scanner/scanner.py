@@ -1,7 +1,13 @@
 # -*- coding: utf-8 -*-
 """
 Repository Security Scanner Module
-Scans downloaded repositories for security risks
+==================================
+
+FILE SUMMARY
+------------
+Stage(s) in pipeline:
+  - (3) Download → `RepoDownloader` fetches GitHub repositories as ZIP files.
+  - (4) Static scan → `RepoSecurityScanner` inspects code for security risks.
 """
 
 import os
@@ -15,9 +21,8 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, List, Any, Optional, Tuple
 
-from ..utils.config_loader import Config
+from utils.config_loader import Config
 
-# Setup logging
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
@@ -26,8 +31,6 @@ logger = logging.getLogger(__name__)
 
 
 class RepoDownloader:
-    """Download repositories from GitHub"""
-
     def __init__(self, config: Config):
         self.config = config
         self.paths = config.paths
@@ -49,15 +52,6 @@ class RepoDownloader:
         self.branch_fallback = config.get('download.branch_fallback', True)
 
     def download_repo(self, repo_info: Dict[str, Any]) -> Tuple[bool, str, str]:
-        """
-        Download a single repository
-
-        Args:
-            repo_info: Repository information dict
-
-        Returns:
-            Tuple of (success, repo_id, message)
-        """
         repo_id = repo_info['repo_id']
         repo = repo_info['repo']
         primary_branch = repo_info.get('branch', 'main')
@@ -65,20 +59,19 @@ class RepoDownloader:
         zip_filename = f"{repo_info.get('id_prefix', '')}{repo_id}.zip"
         zip_path = self.zip_dir / zip_filename
 
-        # Check if already downloaded
         if zip_path.exists() and zip_path.stat().st_size > 0:
             return True, repo_id, f"Already exists ({zip_path.stat().st_size / 1024 / 1024:.2f} MB)"
 
-        # Try download with branch fallback
         download_url = repo_info.get('download_url')
+        attempts = 2 if self.branch_fallback else 1
 
-        for attempt in range(2):
+        for attempt in range(attempts):
             if attempt == 0:
                 branch_display = primary_branch
             else:
                 logger.warning(f"[{repo_id}] Trying fallback branch")
                 fallback_branch = 'master' if primary_branch == 'main' else 'main'
-                download_url = f"https://github.com/{repo}/archive/{fallback_branch}.zip"
+                download_url = f"https://github.com/{repo}/archive/refs/heads/{fallback_branch}.zip"
                 branch_display = f"{fallback_branch} (fallback)"
 
             try:
@@ -93,61 +86,68 @@ class RepoDownloader:
                     logger.info(f"[{repo_id}] Downloaded ({file_size / 1024 / 1024:.2f} MB) [{branch_display}]")
                     return True, repo_id, f"Downloaded ({file_size / 1024 / 1024:.2f} MB) [{branch_display}]"
                 else:
-                    if attempt == 0:
-                        # Remove failed file
-                        if zip_path.exists():
-                            zip_path.unlink()
+                    if zip_path.exists():
+                        zip_path.unlink()
+                    if attempt + 1 < attempts:
                         continue
-                    else:
-                        return False, repo_id, f"Download failed (branch: {branch_display})"
+                    return False, repo_id, f"Download failed (branch: {branch_display})"
 
             except Exception as e:
                 logger.error(f"[{repo_id}] Exception: {e}")
-                if attempt == 0 and zip_path.exists():
+                if zip_path.exists():
                     zip_path.unlink()
-                continue
+                if attempt + 1 < attempts:
+                    continue
 
         return False, repo_id, "Download failed"
 
     def _download_with_curl(self, url: str, output_path: str, repo_id: str) -> bool:
-        """Download using curl with optional authentication"""
-        import tempfile
+        cmd = [
+            'curl',
+            '-L',
+            '-sS',
+            '--fail',
+            '--max-time', str(self.timeout),
+            '-o', output_path,
+            url
+        ]
 
-        # Create netrc file for authentication
-        netrc_file = None
-        if self.github_token:
-            netrc_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
-            netrc_file.write(f"machine github.com\nlogin {self.github_token}\npassword x-oauth-basic\n")
-            netrc_file.close()
+        result = subprocess.run(
+            cmd,
+            capture_output=True,
+            timeout=self.timeout + 10
+        )
+
+        if result.returncode != 0:
+            stderr = result.stderr.decode(errors='ignore').strip()
+            logger.error(f"[{repo_id}] curl failed for {url}: {stderr}")
+            return False
+
+        path = Path(output_path)
+        if not path.exists() or path.stat().st_size == 0:
+            logger.error(f"[{repo_id}] empty download for {url}")
+            return False
 
         try:
-            cmd = ['curl', '-L', '-o', output_path, '-s', '--max-time', str(self.timeout)]
+            with open(path, 'rb') as f:
+                sig = f.read(2)
+        except Exception as e:
+            logger.error(f"[{repo_id}] failed to inspect downloaded file: {e}")
+            path.unlink(missing_ok=True)
+            return False
 
-            if netrc_file:
-                cmd.extend(['--netrc-file', netrc_file.name])
+        if sig != b'PK':
+            try:
+                preview = path.read_text(encoding='utf-8', errors='ignore')[:200]
+            except Exception:
+                preview = "<non-text content>"
+            logger.error(f"[{repo_id}] downloaded file is not a ZIP. Preview: {preview}")
+            path.unlink(missing_ok=True)
+            return False
 
-            cmd.append(url)
-
-            result = subprocess.run(cmd, capture_output=True, timeout=self.timeout + 10)
-
-            return result.returncode == 0 and Path(output_path).stat().st_size > 0
-
-        finally:
-            if netrc_file:
-                import os
-                os.unlink(netrc_file.name)
+        return True
 
     def download_all(self, repo_mapping: List[Dict], limit: Optional[int] = None) -> Dict[str, Any]:
-        """
-        Download all repositories
-
-        Args:
-            repo_mapping: List of repository info dicts
-            limit: Optional limit on number of downloads
-
-        Returns:
-            Statistics dictionary
-        """
         if limit:
             repo_mapping = repo_mapping[:limit]
 
@@ -188,8 +188,6 @@ class RepoDownloader:
 
 
 class RepoSecurityScanner:
-    """Security scanner for repositories"""
-
     RISK_PRIORITY = {
         'CRITICAL': 5,
         'HIGH': 4,
@@ -206,7 +204,6 @@ class RepoSecurityScanner:
         self.zip_dir = self.paths.zip_dir
         self.repo_dir = self.paths.repo_dir
 
-        # Risk directories
         self.risk_dirs = {
             'CRITICAL': self.paths.get_risk_dir('critical'),
             'HIGH': self.paths.get_risk_dir('high'),
@@ -218,11 +215,9 @@ class RepoSecurityScanner:
         for risk_dir in self.risk_dirs.values():
             risk_dir.mkdir(parents=True, exist_ok=True)
 
-        # Scanner settings
         self.max_workers = config.get('scanner.max_workers', 5)
         self.timeout = config.get('scanner.timeout', 60)
 
-        # Thresholds
         self.thresholds = {
             'critical': config.get('scanner.thresholds.critical', 8),
             'high': config.get('scanner.thresholds.high', 6),
@@ -230,7 +225,6 @@ class RepoSecurityScanner:
             'low': config.get('scanner.thresholds.low', 2),
         }
 
-        # Statistics
         self.scan_stats = {
             'total': 0,
             'scanned': 0,
@@ -240,7 +234,6 @@ class RepoSecurityScanner:
         }
 
     def extract_repo(self, zip_path: Path) -> Optional[Path]:
-        """Extract repository ZIP file"""
         repo_id = zip_path.stem
         target_path = self.repo_dir / repo_id
 
@@ -275,7 +268,6 @@ class RepoSecurityScanner:
             return None
 
     def find_skill_dirs(self, repo_path: Path) -> List[Path]:
-        """Find all skill directories in repository"""
         skill_dirs = []
 
         for item in repo_path.rglob('*'):
@@ -285,27 +277,49 @@ class RepoSecurityScanner:
         return skill_dirs
 
     def _is_skill_dir(self, path: Path) -> bool:
-        """Check if directory is a skill directory"""
         indicators = ['SKILL.md', 'skill.json', 'api.json', 'tool.json']
         return any((path / f).exists() for f in indicators)
 
     def scan_skill(self, skill_dir: Path, repo_id: str) -> Optional[Dict[str, Any]]:
-        """Scan a single skill directory"""
+        """
+        Scan a single skill directory using the external skill-security-scan tool.
+        """
         try:
             import tempfile
+
             temp_output = tempfile.mktemp(suffix='.json')
-
-            cmd = [
-                sys.executable, '-m', 'skill_security_scan.src.cli',
-                'scan',
-                str(skill_dir),
-                '--format', 'json',
-                '--output', temp_output,
-                '--no-color'
-            ]
-
-            # Get scan tool directory
             scan_tool_dir = Path(__file__).parent.parent / 'scanner' / 'skill-security-scan'
+            scanner_python = scan_tool_dir / '.venv' / 'bin' / 'python3'
+            scanner_cli = scan_tool_dir / '.venv' / 'bin' / 'skill-security-scan'
+
+            if scanner_cli.exists():
+                cmd = [
+                    str(scanner_cli),
+                    'scan',
+                    str(skill_dir),
+                    '--format', 'json',
+                    '--output', temp_output,
+                    '--no-color'
+                ]
+            elif scanner_python.exists() and (scan_tool_dir / 'standalone_cli.py').exists():
+                cmd = [
+                    str(scanner_python),
+                    str(scan_tool_dir / 'standalone_cli.py'),
+                    'scan',
+                    str(skill_dir),
+                    '--format', 'json',
+                    '--output', temp_output,
+                    '--no-color'
+                ]
+            else:
+                cmd = [
+                    'skill-security-scan',
+                    'scan',
+                    str(skill_dir),
+                    '--format', 'json',
+                    '--output', temp_output,
+                    '--no-color'
+                ]
 
             result = subprocess.run(
                 cmd,
@@ -334,7 +348,6 @@ class RepoSecurityScanner:
         return None
 
     def calculate_repo_risk(self, skill_reports: List[Dict]) -> Tuple[str, Dict]:
-        """Calculate repository risk from skill reports"""
         if not skill_reports:
             return 'UNKNOWN', {'reason': 'No skills scanned'}
 
@@ -359,11 +372,9 @@ class RepoSecurityScanner:
                 risk = 'SAFE'
 
             risk_counts[risk] += 1
-
             findings = report.get('findings', [])
             total_issues += len(findings)
 
-        # Find highest priority risk
         max_priority = 0
         repo_risk = 'UNKNOWN'
 
@@ -383,16 +394,8 @@ class RepoSecurityScanner:
         return repo_risk, summary
 
     def scan_repo(self, zip_path: Path) -> Tuple[str, str, int]:
-        """
-        Scan a single repository
-
-        Returns:
-            Tuple of (status, risk_level, skill_count)
-            status: 'scanned', 'skipped', 'failed'
-        """
         repo_id = zip_path.stem
 
-        # Check if already scanned
         for risk_dir in self.risk_dirs.values():
             report_path = risk_dir / f"{repo_id}_report.json"
             if report_path.exists():
@@ -400,16 +403,14 @@ class RepoSecurityScanner:
                     with open(report_path, 'r') as f:
                         existing_report = json.load(f)
                         existing_risk = existing_report.get('risk_level', 'UNKNOWN')
-                except:
+                except Exception:
                     existing_risk = 'UNKNOWN'
                 return 'skipped', existing_risk, 0
 
-        # Extract repository
         repo_path = self.extract_repo(zip_path)
         if not repo_path:
             return 'failed', 'UNKNOWN', 0
 
-        # Find skill directories
         skill_dirs = self.find_skill_dirs(repo_path)
 
         if not skill_dirs:
@@ -419,20 +420,15 @@ class RepoSecurityScanner:
 
         logger.info(f"[{repo_id}] Found {len(skill_dirs)} skills")
 
-        # Scan all skills
         skill_reports = []
         for skill_dir in skill_dirs:
             report = self.scan_skill(skill_dir, repo_id)
             if report:
                 skill_reports.append(report)
 
-        # Calculate risk
         repo_risk, risk_summary = self.calculate_repo_risk(skill_reports)
-
-        # Generate report
         report = self._generate_report(repo_id, repo_path, repo_risk, risk_summary, skill_reports)
 
-        # Save report
         target_dir = self.risk_dirs.get(repo_risk, self.risk_dirs['LOW'])
         report_path = target_dir / f"{repo_id}_report.json"
 
@@ -440,12 +436,10 @@ class RepoSecurityScanner:
             json.dump(report, f, indent=2, ensure_ascii=False)
 
         logger.info(f"[{repo_id}] Scan complete: {repo_risk}, skills: {len(skill_dirs)}")
-
         return 'scanned', repo_risk, len(skill_dirs)
 
     def _generate_report(self, repo_id: str, repo_path: Path, risk_level: str,
                          risk_summary: Dict, skill_reports: List[Dict]) -> Dict:
-        """Generate repository scan report"""
         from datetime import datetime
 
         all_issues = []
@@ -475,7 +469,6 @@ class RepoSecurityScanner:
         }
 
     def scan_all(self, limit: Optional[int] = None, start_from: int = 0) -> Dict:
-        """Scan all repositories"""
         zip_files = list(self.zip_dir.glob('*.zip'))
         zip_files.sort(key=lambda x: self._extract_number(x.name))
 
@@ -520,12 +513,10 @@ class RepoSecurityScanner:
         return self.scan_stats
 
     def _extract_number(self, filename: str) -> int:
-        """Extract number ID from filename"""
         import re
         match = re.search(r'(\d+)', filename)
         return int(match.group(1)) if match else 0
 
     def _print_summary(self):
-        """Print scan summary"""
         logger.info(f"Scanned: {self.scan_stats['scanned']}, Skipped: {self.scan_stats['skipped']}, Failed: {self.scan_stats['failed']}")
         logger.info(f"Risk distribution: {self.scan_stats['by_risk']}")
