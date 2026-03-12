@@ -81,6 +81,11 @@ print(f"Class distribution:\n{full_df['classification'].value_counts()}")
 
 The `code/` directory contains a complete security analysis pipeline for Claude Code Skills.
 
+## Known Setup Issues
+
+Some setup issues were encountered during local deployment on Linux (import errors, Docker dependency mirror issue, and missing `skill-security-scan` component).
+
+See `SETUP_FIXES.md` for the commands and modifications used to resolve them.
 ### Quick Start
 
 ```bash
@@ -207,3 +212,4 @@ The goal of this work is to raise awareness of AI agent security risks and infor
 ## License
 
 `MaliciousAgentSkillsBench` is licensed under the MIT License. See LICENSE for more details.
+
