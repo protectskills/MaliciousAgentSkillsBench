@@ -750,7 +750,7 @@ def status(ctx: click.Context) -> None:
 @cli.command()
 @click.option(
     "--mode",
-    type=click.Choice(["none", "lite", "full-cpu", "full-custom"]),
+    type=click.Choice(["lite", "load-tar", "none", "full-cpu", "full-custom"]),
     default=None,
 )
 @click.option("--verbose", is_flag=True, help="Stream full Docker build output instead of concise progress.")
@@ -768,10 +768,21 @@ def build(ctx: click.Context, mode: str | None, verbose: bool) -> None:
         )
     mode = mode or click.prompt(
         "Image mode",
-        type=click.Choice(["none", "lite", "full-cpu", "full-custom"]),
+        type=click.Choice(["lite", "load-tar", "none", "full-cpu", "full-custom"]),
         default="lite",
     )
     image = env.get("DOCKER_IMAGE", DEFAULTS["DOCKER_IMAGE"])
+    if mode == "load-tar":
+        default_tar = ROOT / "docker-images" / "claude-skill-sandbox-lite.tar.gz"
+        tar_path = Path(ask_value("Image tar or tar.gz file", str(default_tar))).expanduser()
+        if not tar_path.exists():
+            raise click.ClickException(f"Image archive not found: {tar_path}")
+        load_cmd = docker + ["load", "-i", str(tar_path)]
+        code = run(load_cmd, env=env)
+        if code != 0:
+            raise click.ClickException(f"Docker load failed with exit code {code}")
+        return
+
     if mode == "lite" and image == DEFAULTS["DOCKER_IMAGE"]:
         if click.confirm(f"Pull prebuilt image {image}?", default=True):
             code = run(docker + ["pull", image], env=env)

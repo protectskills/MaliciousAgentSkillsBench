@@ -6,6 +6,13 @@ The default small-batch path uses a prebuilt `lite` image:
 docker pull ghcr.io/protectskills/claude-skill-sandbox:lite
 ```
 
+If registry access is unreliable, download the release asset and load it:
+
+```bash
+gh release download sandbox-lite-v1 --pattern 'claude-skill-sandbox-lite.tar.gz'
+docker load -i claude-skill-sandbox-lite.tar.gz
+```
+
 Build locally from the `code/` directory only when customizing the image:
 
 ```bash
@@ -16,8 +23,9 @@ The image uses Node.js 22 by default for Claude Code CLI. Override it with
 `--build-arg NODE_MAJOR=<major>` if needed.
 
 When using `python3 helper.py build --mode lite`, the helper pulls the prebuilt
-image by default. Local `none`, `full-cpu`, and `full-custom` builds still save
-complete Docker logs under `logs/`; add `--verbose` to stream all output.
+image by default. Use `--mode load-tar` to import a downloaded release asset.
+Local `none`, `full-cpu`, and `full-custom` builds still save complete Docker
+logs under `logs/`; add `--verbose` to stream all output.
 
 ## Modes
 
