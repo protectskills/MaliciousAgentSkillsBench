@@ -8,7 +8,21 @@ set -e
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 source "$SCRIPT_DIR/lib.sh"
 
+EXEC_TIMEOUT_WAS_SET="${EXEC_TIMEOUT+x}"
 init_config
+
+case "${EXEC_REPORT_MODE:-false}" in
+    true|TRUE|True|1|yes|YES|Yes|y|Y|on|ON|On)
+        EXEC_REPORT_MODE_ENABLED=true
+        ;;
+    *)
+        EXEC_REPORT_MODE_ENABLED=false
+        ;;
+esac
+
+if [ "$EXEC_REPORT_MODE_ENABLED" = "true" ] && [ -z "$EXEC_TIMEOUT_WAS_SET" ]; then
+    export EXEC_TIMEOUT="${EXEC_REPORT_TIMEOUT:-480}"
+fi
 
 log_info "=========================================="
 log_info "Step 6: Dynamic Execution"
