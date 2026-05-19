@@ -51,7 +51,7 @@ DEFAULTS = {
     "RUN_QUEUE_LIMIT": "1",
     "SKILL_EXECUTOR": "hostauth",
     "DOCKER_CMD": "docker",
-    "DOCKER_IMAGE": "claude-skill-sandbox",
+    "DOCKER_IMAGE": "ghcr.io/protectskills/claude-skill-sandbox:lite",
     "NODE_MAJOR": "22",
     "EXEC_WORKERS": "1",
     "EXEC_TIMEOUT": "240",
@@ -172,11 +172,11 @@ def env_hints(env: Dict[str, str]) -> List[str]:
     elif not docker_access_ok(docker):
         hints.append("Docker is installed but this Docker command cannot access the daemon. Add the user to the docker group and start a new login shell, run helper with sudo, or set DOCKER_CMD='sudo docker'.")
     elif subprocess.call(
-        docker + ["image", "inspect", env.get("DOCKER_IMAGE", "claude-skill-sandbox")],
+        docker + ["image", "inspect", env.get("DOCKER_IMAGE", DEFAULTS["DOCKER_IMAGE"])],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     ) != 0:
-        hints.append("Run `python3 helper.py build --mode lite` or set DOCKER_IMAGE to an existing image.")
+        hints.append("Run `python3 helper.py build --mode lite` to pull the default image, or set DOCKER_IMAGE to an existing image.")
     return hints
 
 
@@ -515,7 +515,7 @@ def main_menu(ctx: click.Context, env_file: Path) -> None:
     actions = {
         "1": ("init", init, "create or update .env"),
         "2": ("doctor", doctor, "check Python, Docker, credentials, and image"),
-        "3": ("build", build, "build the Docker sandbox image"),
+        "3": ("image", build, "pull or build the Docker sandbox image"),
         "4": ("run", run_experiment, "run the default small-batch experiment"),
         "5": ("status", status, "show or edit configuration and runtime outputs"),
         "6": ("clean", clean, "remove selected runtime outputs"),
@@ -698,7 +698,7 @@ def doctor(ctx: click.Context) -> None:
     print_check("Docker command", docker_cli, " ".join(docker))
     print_check("Docker daemon access", docker_cli and docker_access_ok(docker), docker_access_detail(docker) if docker_cli else f"{docker[0]} command not found")
 
-    image = env.get("DOCKER_IMAGE", "claude-skill-sandbox")
+    image = env.get("DOCKER_IMAGE", DEFAULTS["DOCKER_IMAGE"])
     docker_ok = docker_cli and docker_access_ok(docker) and subprocess.call(
         docker + ["image", "inspect", image],
         stdout=subprocess.DEVNULL,
@@ -756,7 +756,7 @@ def status(ctx: click.Context) -> None:
 @click.option("--verbose", is_flag=True, help="Stream full Docker build output instead of concise progress.")
 @click.pass_context
 def build(ctx: click.Context, mode: str | None, verbose: bool) -> None:
-    """Build the Docker sandbox image."""
+    """Pull or build the Docker sandbox image."""
     env = merged_env(ctx.obj["env_file"])
     docker = docker_cmd(env)
     if not command_exists(docker[0]):
@@ -771,7 +771,14 @@ def build(ctx: click.Context, mode: str | None, verbose: bool) -> None:
         type=click.Choice(["none", "lite", "full-cpu", "full-custom"]),
         default="lite",
     )
-    image = env.get("DOCKER_IMAGE", "claude-skill-sandbox")
+    image = env.get("DOCKER_IMAGE", DEFAULTS["DOCKER_IMAGE"])
+    if mode == "lite" and image == DEFAULTS["DOCKER_IMAGE"]:
+        if click.confirm(f"Pull prebuilt image {image}?", default=True):
+            code = run(docker + ["pull", image], env=env)
+            if code != 0:
+                raise click.ClickException(f"Docker pull failed with exit code {code}")
+        return
+
     args = docker + ["build", "-t", image, "-f", "Dockerfile", "--build-arg", f"NODE_MAJOR={env.get('NODE_MAJOR', '22')}"]
     if mode == "none":
         args += ["--build-arg", "NOVA_MODE=none"]

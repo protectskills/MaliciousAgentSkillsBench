@@ -1,6 +1,12 @@
-# Docker Build Guide
+# Docker Image Guide
 
-Build from the `code/` directory:
+The default small-batch path uses a prebuilt `lite` image:
+
+```bash
+docker pull ghcr.io/protectskills/claude-skill-sandbox:lite
+```
+
+Build locally from the `code/` directory only when customizing the image:
 
 ```bash
 docker build --build-arg NOVA_MODE=lite -t claude-skill-sandbox -f Dockerfile .
@@ -9,9 +15,9 @@ docker build --build-arg NOVA_MODE=lite -t claude-skill-sandbox -f Dockerfile .
 The image uses Node.js 22 by default for Claude Code CLI. Override it with
 `--build-arg NODE_MAJOR=<major>` if needed.
 
-When using `python3 helper.py build --mode lite`, the helper prints concise
-progress and saves the complete Docker log under `logs/`. Add `--verbose` to
-stream all Docker output.
+When using `python3 helper.py build --mode lite`, the helper pulls the prebuilt
+image by default. Local `none`, `full-cpu`, and `full-custom` builds still save
+complete Docker logs under `logs/`; add `--verbose` to stream all output.
 
 ## Modes
 
