@@ -13,6 +13,7 @@ import argparse
 import hashlib
 import json
 import re
+from collections import Counter
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from pathlib import Path
 
@@ -27,8 +28,12 @@ from utils.config_loader import Config
 
 COMPLETED_STATUSES = {
     "completed",
+    "timeout_captured",
+    # Backward-compatible names from earlier state files.
+    "completed_with_report",
     "timeout_with_artifacts",
     "timeout_no_output_with_artifacts",
+    "partial_report_timeout",
 }
 
 
@@ -98,7 +103,7 @@ def load_completed_tasks(
     if retry_timeout_artifacts is None:
         retry_timeout_artifacts = os.environ.get("RETRY_TIMEOUT_ARTIFACTS", "false").lower() == "true"
     if retry_timeout_artifacts:
-        completed_statuses = {"completed"}
+        completed_statuses = {"completed", "completed_with_report"}
     if not state_file.exists():
         return completed
     with state_file.open("r", encoding="utf-8") as f:
@@ -118,8 +123,8 @@ def load_completed_tasks(
                 completed.add(task_id)
             elif (
                 status == "timeout"
+                and not retry_timeout_artifacts
                 and config is not None
-                and "timeout_with_artifacts" in completed_statuses
                 and record_has_nova_report(config, record)
             ):
                 completed.add(task_id)
@@ -143,6 +148,12 @@ def append_state(state_file: Path, task: dict, status: str, message: str, log_di
     }
     if log_dir is not None:
         record["log_dir"] = str(log_dir)
+        report_status, report_file = execution_report_status(log_dir)
+        record["execution_report_status"] = report_status
+        if report_file:
+            record["execution_report"] = report_file
+        if status == "timeout_captured":
+            record["claude_output_status"] = "present" if claude_has_substantive_output(log_dir) else "missing"
     payload = json.dumps(record, ensure_ascii=False) + "\n"
     with _STATE_FILE_LOCK:
         with state_file.open("a", encoding="utf-8") as f:
@@ -179,6 +190,18 @@ def claude_has_substantive_output(log_dir: Path) -> bool:
     return False
 
 
+def execution_report_status(log_dir: Path) -> tuple[str, str]:
+    report_file = log_dir / "claude_execution_report.md"
+    if not report_file.exists():
+        return "missing", ""
+    content = report_file.read_text(encoding="utf-8", errors="ignore")
+    if "MASB_FINAL_RESULT: completed" in content:
+        return "completed", str(report_file)
+    if content.strip():
+        return "partial", str(report_file)
+    return "empty", str(report_file)
+
+
 def classify_timeout(log_dir: Path, skill_name: str) -> tuple[bool, str, str]:
     if not log_dir:
         return False, "timeout", f"[{skill_name}] Timed out (code 124, no log directory found)"
@@ -187,18 +210,17 @@ def classify_timeout(log_dir: Path, skill_name: str) -> tuple[bool, str, str]:
     if not nova_reports:
         return False, "timeout", f"[{skill_name}] Timed out (code 124, no NOVA report)"
 
-    if claude_has_substantive_output(log_dir):
-        status = "timeout_with_artifacts"
-        output_note = "partial Claude output"
-    else:
-        status = "timeout_no_output_with_artifacts"
-        output_note = "no substantive Claude output"
+    report_status, report_file = execution_report_status(log_dir)
+    output_note = "partial Claude output" if claude_has_substantive_output(log_dir) else "no substantive Claude output"
+    report_note = f"; report_status={report_status}"
+    if report_file:
+        report_note += f"; report={report_file}"
 
     return (
         True,
-        status,
+        "timeout_captured",
         f"[{skill_name}] Timed out after monitoring artifacts were captured "
-        f"({output_note}; nova_report={nova_reports[0]}; log_dir={log_dir})",
+        f"({output_note}{report_note}; nova_report={nova_reports[0]}; log_dir={log_dir})",
     )
 
 
@@ -302,10 +324,14 @@ def run_task(line: str, config: Config, quiet_log_file: Path | None = None) -> t
         elapsed = time.monotonic() - start
 
         if result.returncode == 0:
+            report_status, report_file = execution_report_status(log_dir)
             if quiet_log_file is None:
                 print(f"\nSuccess: {skill_name}")
                 sys.stdout.flush()
-            return True, "completed", f"[{skill_name}] Success", elapsed, log_dir
+            message = f"[{skill_name}] Success"
+            if report_file:
+                message += f" (execution_report={report_file}, report_status={report_status})"
+            return True, "completed", message, elapsed, log_dir
         elif result.returncode == 124:
             success, status, message = classify_timeout(log_dir, skill_name)
             if quiet_log_file is None:
@@ -419,6 +445,7 @@ def main():
         sys.stdout.flush()
 
     results = []
+    statuses = []
 
     if sequential:
         # Sequential execution
@@ -431,6 +458,7 @@ def main():
                 _print_status(i, task, success, status, elapsed, log_file)
             append_state(state_file, task, status, msg, run_log_dir)
             results.append(success)
+            statuses.append(status)
             time.sleep(1)
     else:
         # Concurrent execution
@@ -451,6 +479,7 @@ def main():
                     _print_status(completed_count, task, success, status, elapsed, log_file)
                 append_state(state_file, task, status, msg, run_log_dir)
                 results.append(success)
+                statuses.append(status)
 
     # Summary
     success_count = sum(results)
@@ -460,6 +489,8 @@ def main():
     print(f"Total attempted: {total}")
     print(f"Success: {success_count}")
     print(f"Failed: {total - success_count}")
+    for status, count in sorted(Counter(statuses).items()):
+        print(f"{status}: {count}")
     print("="*60)
 
     if success_count < total and os.environ.get("ALLOW_EXECUTION_FAILURES", "false").lower() != "true":

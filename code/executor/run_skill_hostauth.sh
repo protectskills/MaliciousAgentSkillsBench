@@ -19,6 +19,7 @@ NOVA_BLOCK="${NOVA_BLOCK:-false}"
 NOVA_PROVIDER="${NOVA_PROVIDER:-tracer}"
 NOVA_PROFILE="${NOVA_PROFILE:-record}"
 TIMEOUT="${EXEC_TIMEOUT:-900}"
+EXEC_REPORT_MODE="${EXEC_REPORT_MODE:-false}"
 DOCKER_IMAGE="${DOCKER_IMAGE:-claude-skill-sandbox}"
 DOCKER_CMD="${DOCKER_CMD:-docker}"
 AGENT_CLI="${AGENT_CLI:-claude}"
@@ -29,6 +30,7 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="${PROJECT_ROOT:-$(dirname "$SCRIPT_DIR")}"
 EXECUTION_LOGS_DIR="${EXECUTION_LOGS_DIR:-$PROJECT_ROOT/workspace/dynamic}"
 CLAUDE_CREDENTIALS_FILE="${CLAUDE_CREDENTIALS_FILE:-$HOME/.claude/.credentials.json}"
+CLAUDE_SETTINGS_FILE="${CLAUDE_SETTINGS_FILE:-$HOME/.claude/settings.json}"
 
 safe_component() {
     printf '%s' "$1" | tr -c 'A-Za-z0-9_.-' '_' | sed 's/^[._]*//; s/[._]*$//' | cut -c1-180
@@ -38,6 +40,15 @@ if ! [[ "$TIMEOUT" =~ ^[0-9]+$ ]] || [ "$TIMEOUT" -le 0 ]; then
     echo "Error: EXEC_TIMEOUT must be a positive integer number of seconds: $TIMEOUT"
     exit 1
 fi
+
+case "$EXEC_REPORT_MODE" in
+    true|TRUE|True|1|yes|YES|Yes|y|Y|on|ON|On)
+        EXEC_REPORT_MODE="true"
+        ;;
+    *)
+        EXEC_REPORT_MODE="false"
+        ;;
+esac
 
 SAFE_SKILL_NAME="$(safe_component "$SKILL_NAME")"
 SAFE_REPO_ID="$(safe_component "$REPO_ID")"
@@ -63,19 +74,111 @@ if [ -z "$SKILL_PATH" ] || [ ! -d "$SKILL_PATH" ]; then
     exit 1
 fi
 
-if [ ! -f "$CLAUDE_CREDENTIALS_FILE" ]; then
-    echo "Error: Claude credentials file not found: $CLAUDE_CREDENTIALS_FILE"
-    exit 1
-fi
-
-if ! command -v docker >/dev/null 2>&1; then
-    echo "Error: docker is not installed or not on PATH"
-    exit 1
-fi
-
 read -r -a DOCKER_CMD_ARRAY <<< "$DOCKER_CMD"
 if ! command -v "${DOCKER_CMD_ARRAY[0]}" >/dev/null 2>&1; then
     echo "Error: Docker command not found: ${DOCKER_CMD_ARRAY[0]}"
+    exit 1
+fi
+
+TEMP_CREDENTIALS_FILE=""
+SETTINGS_ENV_FILE=""
+CONTAINER_NAME=""
+cleanup_host() {
+    if [ -n "${CONTAINER_NAME:-}" ]; then
+        "${DOCKER_CMD_ARRAY[@]}" rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true
+    fi
+    if [ -n "${TEMP_CREDENTIALS_FILE:-}" ]; then
+        rm -f "$TEMP_CREDENTIALS_FILE"
+    fi
+    if [ -n "${SETTINGS_ENV_FILE:-}" ]; then
+        rm -f "$SETTINGS_ENV_FILE"
+    fi
+}
+trap cleanup_host EXIT
+
+SETTINGS_ENV_ARGS=()
+if [ -f "$CLAUDE_SETTINGS_FILE" ]; then
+    SETTINGS_ENV_FILE="$(mktemp)"
+    if python3 - "$CLAUDE_SETTINGS_FILE" "$SETTINGS_ENV_FILE" <<'PY'
+import json
+import sys
+
+settings_path, output_path = sys.argv[1], sys.argv[2]
+allowed = {
+    "ANTHROPIC_AUTH_TOKEN",
+    "ANTHROPIC_API_KEY",
+    "ANTHROPIC_BASE_URL",
+    "ANTHROPIC_MODEL",
+    "ANTHROPIC_SMALL_FAST_MODEL",
+    "CLAUDE_CODE_USE_BEDROCK",
+    "CLAUDE_CODE_USE_VERTEX",
+}
+try:
+    lines = []
+    with open(settings_path, "r", encoding="utf-8") as fh:
+        settings = json.load(fh)
+    env = settings.get("env", {})
+    if isinstance(env, dict):
+        for key, value in env.items():
+            if key in allowed and isinstance(value, str) and value and "\n" not in value and "\r" not in value:
+                lines.append(f"{key}={value}")
+    with open(output_path, "w", encoding="utf-8") as fh:
+        fh.write("\n".join(lines))
+        if lines:
+            fh.write("\n")
+except Exception:
+    raise SystemExit(1)
+PY
+    then
+        if [ -s "$SETTINGS_ENV_FILE" ]; then
+            chmod 600 "$SETTINGS_ENV_FILE"
+            SETTINGS_ENV_ARGS+=("--env-file" "$SETTINGS_ENV_FILE")
+        else
+            rm -f "$SETTINGS_ENV_FILE"
+            SETTINGS_ENV_FILE=""
+        fi
+    else
+        rm -f "$SETTINGS_ENV_FILE"
+        SETTINGS_ENV_FILE=""
+    fi
+fi
+
+if [ ! -f "$CLAUDE_CREDENTIALS_FILE" ] && [ -f "$CLAUDE_SETTINGS_FILE" ]; then
+    TEMP_CREDENTIALS_FILE="$(mktemp)"
+    if python3 - "$CLAUDE_SETTINGS_FILE" "$TEMP_CREDENTIALS_FILE" <<'PY'
+import json
+import sys
+
+settings_path, output_path = sys.argv[1], sys.argv[2]
+with open(settings_path, "r", encoding="utf-8") as fh:
+    settings = json.load(fh)
+env = settings.get("env", {})
+if not isinstance(env, dict):
+    raise SystemExit(1)
+token = env.get("ANTHROPIC_AUTH_TOKEN") or env.get("ANTHROPIC_API_KEY")
+if not token:
+    raise SystemExit(1)
+credentials = {"apiKey": token}
+base_url = env.get("ANTHROPIC_BASE_URL")
+if base_url:
+    credentials["baseURL"] = base_url
+with open(output_path, "w", encoding="utf-8") as fh:
+    json.dump(credentials, fh)
+    fh.write("\n")
+PY
+    then
+        chmod 600 "$TEMP_CREDENTIALS_FILE"
+        CLAUDE_CREDENTIALS_FILE="$TEMP_CREDENTIALS_FILE"
+        echo "Auth: generated temporary Claude credentials from settings env"
+    else
+        rm -f "$TEMP_CREDENTIALS_FILE"
+        TEMP_CREDENTIALS_FILE=""
+    fi
+fi
+
+if [ ! -f "$CLAUDE_CREDENTIALS_FILE" ]; then
+    echo "Error: Claude credentials file not found: $CLAUDE_CREDENTIALS_FILE"
+    echo "Set CLAUDE_CREDENTIALS_FILE, or set CLAUDE_SETTINGS_FILE to a settings.json with ANTHROPIC_AUTH_TOKEN/ANTHROPIC_API_KEY."
     exit 1
 fi
 
@@ -117,7 +220,6 @@ echo "Auth: $AUTH_MODE via read-only host credentials"
 # Host-side safety net: bound the whole docker run by EXEC_TIMEOUT + 180s, and
 # guarantee the container is removed even if `timeout` had to kill the client.
 HOST_TIMEOUT=$((TIMEOUT + 180))
-trap '"${DOCKER_CMD_ARRAY[@]}" rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true' EXIT
 
 set +e
 timeout --kill-after=10s "${HOST_TIMEOUT}s" "${DOCKER_CMD_ARRAY[@]}" run --rm -i \
@@ -152,6 +254,8 @@ timeout --kill-after=10s "${HOST_TIMEOUT}s" "${DOCKER_CMD_ARRAY[@]}" run --rm -i
     -e NOVA_PROVIDER="$NOVA_PROVIDER" \
     -e NOVA_PROFILE="$NOVA_PROFILE" \
     -e EXEC_TIMEOUT="$TIMEOUT" \
+    -e EXEC_REPORT_MODE="$EXEC_REPORT_MODE" \
+    "${SETTINGS_ENV_ARGS[@]}" \
     "$DOCKER_IMAGE" bash -s <<'CONTAINER_SCRIPT'
 set -euo pipefail
 
@@ -218,6 +322,7 @@ data = {
     "user": "appuser",
     "home": os.environ.get("APPUSER_HOME", ""),
     "timeout_seconds": os.environ.get("EXEC_TIMEOUT", ""),
+    "exec_report_mode": os.environ.get("EXEC_REPORT_MODE", ""),
     "use_nova": os.environ.get("USE_NOVA", ""),
     "nova_block": os.environ.get("NOVA_BLOCK", ""),
     "nova_provider": os.environ.get("NOVA_PROVIDER", ""),
@@ -231,7 +336,27 @@ PY
 chown appuser:appuser "$TEST_DIR/metadata.json"
 
 PROMPT_FILE="/tmp/skill_user_prompt.txt"
-printf '%s' "$USER_PROMPT" > "$PROMPT_FILE"
+if [ "$EXEC_REPORT_MODE" = "true" ]; then
+    cat > "$PROMPT_FILE" <<EOF
+You are executing a monitored skill test. Before using the skill, create or append to this report file:
+$TEST_DIR/claude_execution_report.md
+
+Write these sections as you work:
+## Skill Understanding
+## Test Plan
+## Actions Taken
+## Observations
+## Final Result
+
+Append progress after meaningful actions. If you complete the test, append this exact marker on its own line:
+MASB_FINAL_RESULT: completed
+
+Now run the requested skill test:
+$USER_PROMPT
+EOF
+else
+    printf '%s' "$USER_PROMPT" > "$PROMPT_FILE"
+fi
 chown appuser:appuser "$PROMPT_FILE"
 
 echo "[Monitor] Starting tcpdump..."
@@ -291,6 +416,18 @@ with open(path, "r", encoding="utf-8") as fh:
     data = json.load(fh)
 data["exit_code"] = exit_code
 data["end_time"] = datetime.now(timezone.utc).isoformat()
+report_path = path.rsplit("/", 1)[0] + "/claude_execution_report.md"
+try:
+    with open(report_path, "r", encoding="utf-8", errors="ignore") as report:
+        report_text = report.read()
+    if "MASB_FINAL_RESULT: completed" in report_text:
+        data["execution_report_status"] = "completed"
+    elif report_text.strip():
+        data["execution_report_status"] = "partial"
+    else:
+        data["execution_report_status"] = "empty"
+except FileNotFoundError:
+    data["execution_report_status"] = "missing"
 with open(path, "w", encoding="utf-8") as fh:
     json.dump(data, fh, indent=2)
     fh.write("\n")
@@ -326,6 +463,7 @@ if [ "$DOCKER_RC" -eq 124 ] || [ "$DOCKER_RC" -eq 137 ]; then
     echo "Warning: host-side timeout fired after ${HOST_TIMEOUT}s; container force-removed"
 fi
 
+cleanup_host
 trap - EXIT
 echo ""
 echo "Done: $TEST_DIR"
