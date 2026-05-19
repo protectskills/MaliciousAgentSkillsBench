@@ -15,7 +15,10 @@ from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import Dict, List, Any, Optional, Tuple
 
-from ..utils.config_loader import Config
+try:
+    from ..utils.config_loader import Config
+except ImportError:
+    from utils.config_loader import Config
 
 # Setup logging
 logging.basicConfig(
@@ -38,11 +41,8 @@ class RepoDownloader:
         self.zip_dir.mkdir(parents=True, exist_ok=True)
         self.repo_dir.mkdir(parents=True, exist_ok=True)
 
-        self.github_token = config.get_with_env_fallback(
-            'download.github_token_env',
-            'GITHUB_TOKEN',
-            ''
-        )
+        github_token_env = config.get('download.github_token_env', 'GITHUB_TOKEN')
+        self.github_token = os.environ.get(github_token_env, '')
 
         self.max_workers = config.get('download.concurrent_downloads', 15)
         self.timeout = config.get('download.timeout', 300)
@@ -67,7 +67,10 @@ class RepoDownloader:
 
         # Check if already downloaded
         if zip_path.exists() and zip_path.stat().st_size > 0:
-            return True, repo_id, f"Already exists ({zip_path.stat().st_size / 1024 / 1024:.2f} MB)"
+            if zipfile.is_zipfile(zip_path):
+                return True, repo_id, f"Already exists ({zip_path.stat().st_size / 1024 / 1024:.2f} MB)"
+            logger.warning(f"[{repo_id}] Existing file is not a valid ZIP; redownloading")
+            zip_path.unlink()
 
         # Try download with branch fallback
         download_url = repo_info.get('download_url')
@@ -113,15 +116,17 @@ class RepoDownloader:
         """Download using curl with optional authentication"""
         import tempfile
 
-        # Create netrc file for authentication
+        # Create netrc file for authentication (chmod 0600 to keep the token
+        # private on multi-user hosts; default umask would leave it world-readable).
         netrc_file = None
         if self.github_token:
             netrc_file = tempfile.NamedTemporaryFile(mode='w', delete=False)
             netrc_file.write(f"machine github.com\nlogin {self.github_token}\npassword x-oauth-basic\n")
             netrc_file.close()
+            os.chmod(netrc_file.name, 0o600)
 
         try:
-            cmd = ['curl', '-L', '-o', output_path, '-s', '--max-time', str(self.timeout)]
+            cmd = ['curl', '-f', '-L', '-o', output_path, '-s', '--max-time', str(self.timeout)]
 
             if netrc_file:
                 cmd.extend(['--netrc-file', netrc_file.name])
@@ -130,7 +135,11 @@ class RepoDownloader:
 
             result = subprocess.run(cmd, capture_output=True, timeout=self.timeout + 10)
 
-            return result.returncode == 0 and Path(output_path).stat().st_size > 0
+            output = Path(output_path)
+            if result.returncode != 0 or not output.exists() or output.stat().st_size == 0:
+                return False
+
+            return zipfile.is_zipfile(output)
 
         finally:
             if netrc_file:
@@ -148,6 +157,22 @@ class RepoDownloader:
         Returns:
             Statistics dictionary
         """
+        deduped_mapping = []
+        seen_repos = set()
+        duplicate_count = 0
+        for repo_info in repo_mapping:
+            repo = repo_info.get('repo')
+            if repo in seen_repos:
+                duplicate_count += 1
+                continue
+            seen_repos.add(repo)
+            deduped_mapping.append(repo_info)
+
+        if duplicate_count:
+            logger.info(f"Deduplicated {duplicate_count} repeated repo entries before download")
+
+        repo_mapping = deduped_mapping
+
         if limit:
             repo_mapping = repo_mapping[:limit]
 
@@ -251,6 +276,15 @@ class RepoSecurityScanner:
 
         try:
             with zipfile.ZipFile(zip_path, 'r') as zip_ref:
+                # Zip-slip defense: refuse any member whose resolved path
+                # escapes temp_dir (e.g. absolute paths or '..' traversal).
+                temp_resolved = temp_dir.resolve()
+                for member in zip_ref.namelist():
+                    target = (temp_dir / member).resolve()
+                    try:
+                        target.relative_to(temp_resolved)
+                    except ValueError:
+                        raise Exception(f"Unsafe zip member path rejected: {member}")
                 zip_ref.extractall(temp_dir)
 
             extracted_items = list(temp_dir.iterdir())
@@ -265,7 +299,6 @@ class RepoSecurityScanner:
             shutil.move(str(source_dir), str(target_path))
             shutil.rmtree(temp_dir, ignore_errors=True)
 
-            self.scan_stats['scanned'] += 1
             return target_path
 
         except Exception as e:
@@ -286,15 +319,16 @@ class RepoSecurityScanner:
 
     def _is_skill_dir(self, path: Path) -> bool:
         """Check if directory is a skill directory"""
-        indicators = ['SKILL.md', 'skill.json', 'api.json', 'tool.json']
+        indicators = ['SKILL.md', 'skill.md', 'skill.json', 'api.json', 'tool.json']
         return any((path / f).exists() for f in indicators)
 
     def scan_skill(self, skill_dir: Path, repo_id: str) -> Optional[Dict[str, Any]]:
         """Scan a single skill directory"""
+        import tempfile
+        # Atomic create: avoid mktemp() TOCTOU and ensure cleanup on error paths.
+        temp_fd, temp_output = tempfile.mkstemp(suffix='.json')
+        os.close(temp_fd)
         try:
-            import tempfile
-            temp_output = tempfile.mktemp(suffix='.json')
-
             cmd = [
                 sys.executable, '-m', 'skill_security_scan.src.cli',
                 'scan',
@@ -306,6 +340,7 @@ class RepoSecurityScanner:
 
             # Get scan tool directory
             scan_tool_dir = Path(__file__).parent.parent / 'scanner' / 'skill-security-scan'
+            cmd[2] = 'src.cli'
 
             result = subprocess.run(
                 cmd,
@@ -319,17 +354,19 @@ class RepoSecurityScanner:
                 logger.warning(f"Scan failed {skill_dir}: {result.stderr}")
                 return None
 
-            if Path(temp_output).exists():
+            if Path(temp_output).exists() and Path(temp_output).stat().st_size > 0:
                 with open(temp_output, 'r', encoding='utf-8') as f:
-                    report = json.load(f)
-
-                os.remove(temp_output)
-                return report
+                    return json.load(f)
 
         except subprocess.TimeoutExpired:
             logger.error(f"Scan timeout {skill_dir}")
         except Exception as e:
             logger.error(f"Scan error {skill_dir}: {e}")
+        finally:
+            try:
+                os.remove(temp_output)
+            except OSError:
+                pass
 
         return None
 
@@ -400,9 +437,14 @@ class RepoSecurityScanner:
                     with open(report_path, 'r') as f:
                         existing_report = json.load(f)
                         existing_risk = existing_report.get('risk_level', 'UNKNOWN')
-                except:
-                    existing_risk = 'UNKNOWN'
-                return 'skipped', existing_risk, 0
+                    return 'skipped', existing_risk, 0
+                except (OSError, json.JSONDecodeError) as exc:
+                    corrupt_path = report_path.with_suffix(report_path.suffix + '.corrupt')
+                    logger.warning(f"[{repo_id}] Existing report is unreadable; moving to {corrupt_path.name} and rescanning: {exc}")
+                    try:
+                        report_path.replace(corrupt_path)
+                    except OSError:
+                        report_path.unlink(missing_ok=True)
 
         # Extract repository
         repo_path = self.extract_repo(zip_path)
@@ -501,9 +543,11 @@ class RepoSecurityScanner:
                         status, risk_level, skill_count = future.result()
 
                         if status == 'scanned':
+                            self.scan_stats['scanned'] += 1
                             self.scan_stats['by_risk'][risk_level] += 1
                             processed += 1
                         elif status == 'skipped':
+                            self.scan_stats['skipped'] += 1
                             if risk_level in self.RISK_PRIORITY:
                                 self.scan_stats['by_risk'][risk_level] += 1
                             processed += 1

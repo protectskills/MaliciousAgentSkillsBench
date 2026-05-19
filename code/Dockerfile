@@ -2,19 +2,25 @@
 # Used for dynamic execution of skills in isolated environment
 #
 # BUILD OPTIONS:
-#   NOVA_MODE=full  - Install NOVA with full ML dependencies (torch, transformers, etc.)
-#   NOVA_MODE=lite  - Install NOVA hooks without ML dependencies (pattern matching only)
+#   NOVA_MODE=full  - Install real Nova-tracer plus nova-hunting scanner dependencies
+#   NOVA_MODE=lite  - Install real Nova-tracer recording hooks without scanner dependencies
 #   NOVA_MODE=none  - Don't install NOVA (default)
+#   NODE_MAJOR      - Node.js major version for Claude Code CLI (default: 22)
+#   NOVA_TORCH_SPEC / NOVA_TORCH_INDEX_URL - Override torch wheel selection for full mode
 #
 # Usage:
 #   docker build --build-arg NOVA_MODE=full -t claude-skill-sandbox .
+#   docker build --build-arg NOVA_MODE=full --build-arg NOVA_TORCH_INDEX_URL= -t claude-skill-sandbox:full-gpu .
 #   docker build --build-arg NOVA_MODE=lite -t claude-skill-sandbox .
 #   docker build -t claude-skill-sandbox .
 
-FROM python:3.10-slim
+FROM python:3.10-slim-bookworm
 
 # Build arguments for NOVA installation
 ARG NOVA_MODE=none
+ARG NODE_MAJOR=22
+ARG NOVA_TORCH_SPEC="torch>=2.5,<3"
+ARG NOVA_TORCH_INDEX_URL="https://download.pytorch.org/whl/cpu"
 
 # Configure Chinese mirror sources (fix network issues in China)
 RUN rm -f /etc/apt/sources.list.d/debian.sources && \
@@ -45,8 +51,8 @@ RUN apt-get update && \
         ca-certificates \
     && rm -rf /var/lib/apt/lists/* /var/cache/apt/archives/*
 
-# Install Node.js 18.x (required by Claude Code CLI)
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+# Install Node.js (required by Claude Code CLI)
+RUN curl -fsSL "https://deb.nodesource.com/setup_${NODE_MAJOR}.x" | bash - && \
     apt-get install -y nodejs && \
     rm -rf /var/lib/apt/lists/*
 
@@ -59,37 +65,44 @@ WORKDIR /app
 # Install NOVA based on mode
 RUN if [ "$NOVA_MODE" != "none" ]; then \
     echo "Installing NOVA (mode: $NOVA_MODE)..."; \
-    mkdir -p /opt/nova-protector/nova_hooks; \
+    mkdir -p /opt/nova-tracer; \
     fi
 
-# Copy NOVA requirements (only used in full mode)
+# Copy NOVA requirements (full mode adds nova-hunting; lite keeps recording only)
 COPY nova-requirements.txt /tmp/nova-requirements.txt
+RUN if [ "$NOVA_MODE" != "none" ]; then \
+    pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple pyyaml anthropic; \
+    fi
 RUN if [ "$NOVA_MODE" = "full" ]; then \
-    echo "Installing NOVA ML dependencies (this may take a while)..."; \
+    echo "Installing real NOVA scanner dependencies (this may take a while)..."; \
+    if [ -n "$NOVA_TORCH_SPEC" ]; then \
+        if [ -n "$NOVA_TORCH_INDEX_URL" ]; then \
+            pip install --no-cache-dir --index-url "$NOVA_TORCH_INDEX_URL" "$NOVA_TORCH_SPEC"; \
+        else \
+            pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple "$NOVA_TORCH_SPEC"; \
+        fi; \
+    fi; \
     pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple -r /tmp/nova-requirements.txt; \
     fi
 
-# Copy NOVA hooks (installed in lite and full modes)
-COPY executor/nova-hooks/ /opt/nova-protector/nova_hooks/
+# Copy real Nova-tracer runtime.
+COPY executor/nova-tracer/ /opt/nova-tracer/
 RUN if [ "$NOVA_MODE" != "none" ]; then \
-    chmod +x /opt/nova-protector/nova_hooks/*.py; \
-    echo "$NOVA_MODE" > /opt/nova-protector/nova_mode; \
+    chmod +x /opt/nova-tracer/hooks/*.py; \
+    echo "$NOVA_MODE" > /opt/nova-tracer/nova_mode; \
     fi
-
-# Copy local NOVA package if exists (optional, for development)
-# COPY executor/nova-package/ /opt/nova-protector/nova/
 
 # Setup user and permissions
 RUN useradd -m -s /bin/bash appuser && \
     mkdir -p /app/logs && \
     chown -R appuser:appuser /app && \
     if [ "$NOVA_MODE" != "none" ]; then \
-    chown -R appuser:appuser /opt/nova-protector; \
+    chown -R appuser:appuser /opt/nova-tracer; \
     fi
 
 # Set environment
 ENV PYTHONUNBUFFERED=1
-ENV PATH="/opt/nova-protector/nova_hooks:$PATH"
+ENV PATH="/opt/nova-tracer/hooks:$PATH"
 
 # NOVA mode indicator
 ENV NOVA_MODE=${NOVA_MODE}

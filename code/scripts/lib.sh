@@ -22,9 +22,41 @@ SCAN_RESULTS_DIR=""
 EXECUTION_LOGS_DIR=""
 TASKS_DIR=""
 
+load_dotenv_defaults() {
+    local env_file="$PROJECT_ROOT/.env"
+    local line key value
+
+    [ -f "$env_file" ] || return 0
+
+    while IFS= read -r line || [ -n "$line" ]; do
+        line="${line#"${line%%[![:space:]]*}"}"
+        line="${line%"${line##*[![:space:]]}"}"
+        [ -z "$line" ] && continue
+        [[ "$line" == \#* ]] && continue
+        [[ "$line" == *=* ]] || continue
+
+        key="${line%%=*}"
+        value="${line#*=}"
+        [[ "$key" =~ ^[A-Za-z_][A-Za-z0-9_]*$ ]] || continue
+
+        if [ -z "${!key+x}" ]; then
+            value="${value#"${value%%[![:space:]]*}"}"
+            value="${value%"${value##*[![:space:]]}"}"
+            if [[ "$value" == \"*\" && "$value" == *\" ]]; then
+                value="${value:1:${#value}-2}"
+            elif [[ "$value" == \'*\' && "$value" == *\' ]]; then
+                value="${value:1:${#value}-2}"
+            fi
+            export "$key=$value"
+        fi
+    done < "$env_file"
+}
+
 # Initialize paths from config
 init_config() {
     local config_file="$PROJECT_ROOT/config.yaml"
+
+    load_dotenv_defaults
 
     if [ ! -f "$config_file" ]; then
         echo "Error: Config file not found: $config_file"
@@ -63,15 +95,29 @@ print(paths.tasks_dir)
     export DATA_DIR WORKSPACE_DIR SCAN_RESULTS_DIR EXECUTION_LOGS_DIR TASKS_DIR
     export PROJECT_ROOT
 
-    # Create directories
-    mkdir -p "$DATA_DIR" "$WORKSPACE_DIR" "$SCAN_RESULTS_DIR" "$EXECUTION_LOGS_DIR" "$TASKS_DIR"
+    # Default small-run controls. Callers can override these in the environment.
+    export SKIP_CRAWL="${SKIP_CRAWL:-false}"
+    export DOWNLOAD_LIMIT="${DOWNLOAD_LIMIT:-0}"
+    export SCAN_LIMIT="${SCAN_LIMIT:-0}"
+    export CC_QUEUE_LIMIT="${CC_QUEUE_LIMIT:-3}"
+    export RUN_QUEUE_LIMIT="${RUN_QUEUE_LIMIT:-1}"
+
+    # Create directories.
+    # scan_results/ is intentionally NOT created here -- it is only used by the
+    # optional Claude Code analyzer (step 8), which lazily creates it via
+    # analyzer/cc_analyzer.sh when it actually runs.
+    mkdir -p "$DATA_DIR" "$WORKSPACE_DIR" "$EXECUTION_LOGS_DIR" "$TASKS_DIR"
     mkdir -p "$WORKSPACE_DIR/zip"
     mkdir -p "$WORKSPACE_DIR/repo"
-    mkdir -p "$SCAN_RESULTS_DIR"/{SAFE,SUSPICIOUS,MALICIOUS,ERROR,logs}
+    mkdir -p "$WORKSPACE_DIR/static"
+    mkdir -p "$WORKSPACE_DIR/dynamic"
 
     # Create risk directories
     for risk in critical high medium low safe; do
-        mkdir -p "$WORKSPACE_DIR/$risk"
+        mkdir -p "$WORKSPACE_DIR/static/$risk"
+        if [ -d "$WORKSPACE_DIR/$risk" ]; then
+            find "$WORKSPACE_DIR/$risk" -maxdepth 1 -type f -name "*_report.json" -exec mv -n {} "$WORKSPACE_DIR/static/$risk/" \;
+        fi
     done
 }
 

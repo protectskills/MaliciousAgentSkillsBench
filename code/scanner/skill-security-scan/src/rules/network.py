@@ -1,6 +1,7 @@
 """
 网络安全规则
 """
+import re
 from typing import List
 from .base import SecurityRule, Match
 

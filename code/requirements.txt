@@ -1,9 +1,4 @@
 # Python dependencies
 pyyaml>=6.0
 requests>=2.28.0
-
-# Claude Code
-claude-code>=1.0.0
-
-# Development dependencies (optional)
-pytest>=7.0.0
+click>=8.0

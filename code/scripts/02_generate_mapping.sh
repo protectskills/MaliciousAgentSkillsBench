@@ -24,14 +24,16 @@ if [ ! -f "$DATA_DIR/all_skills_data.json" ]; then
 fi
 
 # Generate mappings
-python3 -c "
+export DATA_DIR
+python3 - <<'PY'
 import json
+import os
 import sys
 from pathlib import Path
 from collections import defaultdict
 
-data_file = Path('$DATA_DIR/all_skills_data.json')
-output_dir = Path('$DATA_DIR')
+output_dir = Path(os.environ['DATA_DIR'])
+data_file = output_dir / 'all_skills_data.json'
 
 with open(data_file, 'r') as f:
     all_skills = json.load(f)
@@ -49,7 +51,7 @@ for skill in all_skills:
     path_parts = [p for p in parsed.path.split('/') if p]
 
     if len(path_parts) >= 2:
-        repo = f'{parsed.netloc}/{path_parts[0]}/{path_parts[1]}'
+        repo = f'{path_parts[0]}/{path_parts[1]}'
 
         # Generate ID prefix
         source = skill.get('data_source', '')
@@ -62,7 +64,7 @@ for skill in all_skills:
         else:
             continue
 
-        repo_skills[(repo, prefix, id_key)].append({
+        repo_skills[(repo, prefix)].append({
             'name': skill.get('name', ''),
             'slug': skill.get('slug', ''),
             'skill_id': id_key
@@ -73,7 +75,7 @@ rest_mapping = []
 smp_mapping = []
 repo_id = 0
 
-for (repo, prefix, _id), skills in repo_skills.items():
+for (repo, prefix), skills in repo_skills.items():
     mapping = {
         'repo_id': repo_id,
         'repo': repo,
@@ -101,7 +103,7 @@ with open(output_dir / 'skillsmp_repo_mapping.json', 'w') as f:
 print(f'Generated {len(rest_mapping)} REST mappings')
 print(f'Generated {len(smp_mapping)} SkillsMP mappings')
 print(f'Total repos: {repo_id}')
-"
+PY
 
 log_success "Repository mapping generated!"
 log_info "REST mapping: $DATA_DIR/repo_skill_mapping.json"

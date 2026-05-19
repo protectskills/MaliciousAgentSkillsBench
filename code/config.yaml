@@ -11,7 +11,7 @@ paths:
   data_dir: "./data"
   workspace_dir: "./workspace"
   scan_results_dir: "./scan_results"
-  execution_logs_dir: "./execution_logs"
+  execution_logs_dir: "./workspace/dynamic"
   tasks_dir: "./tasks"
   scripts_dir: "./scripts"
 
@@ -56,12 +56,6 @@ analyzer:
   prompt_file: "./analyzer/prompts/audit_prompt.txt"
   output_suffix: "_audit.json"
 
-  # API configuration
-  api:
-    key_env: "ANTHROPIC_API_KEY"
-    base_url_env: "ANTHROPIC_BASE_URL"
-    default_base_url: "https://api.anthropic.com"
-
 # Executor configuration
 executor:
   docker_image: "claude-skill-sandbox"
@@ -69,11 +63,6 @@ executor:
   timeout: 900
   use_nova: true
   nova_block: false
-
-  # API key pool
-  api_key_pool:
-    enabled: true
-    pool_file: "./api_keys.conf"
 
 # Logging
 logging:

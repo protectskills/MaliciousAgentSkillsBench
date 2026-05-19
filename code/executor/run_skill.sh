@@ -16,7 +16,9 @@ IN_PLACE_LOG="${6:-false}"
 # Configuration
 USE_NOVA="${USE_NOVA:-true}"
 NOVA_BLOCK="${NOVA_BLOCK:-false}"
+NOVA_PROFILE="${NOVA_PROFILE:-record}"
 TIMEOUT="${EXEC_TIMEOUT:-900}"
+DOCKER_IMAGE="${DOCKER_IMAGE:-claude-skill-sandbox}"
 
 # Get API key
 if [ -n "$ANTHROPIC_API_KEY" ]; then
@@ -79,7 +81,7 @@ docker run --rm -it \
     -e TEST_DIR="$TEST_DIR_MOUNT" \
     -e USE_NOVA="$USE_NOVA" \
     -e NOVA_BLOCK="$NOVA_BLOCK" \
-    claude-skill-sandbox bash -c '
+    "$DOCKER_IMAGE" bash -c '
 
     # Setup user
     useradd -m -u "$HOST_UID" appuser 2>/dev/null
@@ -92,8 +94,8 @@ docker run --rm -it \
 
     # Initialize NOVA
     if [ "$USE_NOVA" = "true" ]; then
-        /nova_setup.sh "$APPUSER_HOME" "$([ "$NOVA_BLOCK" = "true" ] && echo "block" || echo "monitor")"
-        export NOVA_REPORT_DIR="$TEST_DIR/nova"
+        /nova_setup.sh "$APPUSER_HOME" "'"$NOVA_PROFILE"'"
+        export NOVA_REPORT_DIR="$TEST_DIR/nova-tracer"
         mkdir -p "$NOVA_REPORT_DIR"
         chown appuser:appuser "$NOVA_REPORT_DIR"
         echo "[NOVA] Initialized"
@@ -143,8 +145,8 @@ docker run --rm -it \
     # Collect NOVA reports
     if [ "$USE_NOVA" = "true" ]; then
         echo "[NOVA] Collecting reports..."
-        NOVA_SRC="/home/appuser/.nova-protector/reports"
-        NOVA_DEST="$TEST_DIR/nova"
+        NOVA_SRC="/home/appuser/.nova-tracer"
+        NOVA_DEST="$TEST_DIR/nova-tracer"
 
         for i in {1..15}; do
             if [ -d "$NOVA_SRC" ] && [ "$(ls -A $NOVA_SRC 2>/dev/null)" ]; then

@@ -27,7 +27,9 @@ fi
 log_info "Found $zip_count ZIP files"
 
 # Run scanner
-python3 -c "
+export WORKSPACE_DIR SCAN_LIMIT
+python3 - <<'PY'
+import os
 import sys
 sys.path.insert(0, '.')
 from scanner.scanner import RepoSecurityScanner, Config
@@ -37,24 +39,29 @@ config = Config()
 scanner = RepoSecurityScanner(config)
 
 # Get all ZIP files
-zip_files = list(Path('$WORKSPACE_DIR/zip').glob('*.zip'))
+workspace_dir = Path(os.environ['WORKSPACE_DIR'])
+zip_files = list((workspace_dir / 'zip').glob('*.zip'))
 zip_files.sort(key=lambda x: int(''.join(filter(str.isdigit, x.stem))) if ''.join(filter(str.isdigit, x.stem)) else 0)
 
 print(f'ZIPS to scan: {len(zip_files)}')
 
 # Scan
-result = scanner.scan_all(limit=$SCAN_LIMIT)
+scan_limit = os.environ.get('SCAN_LIMIT', '0')
+if not scan_limit.isdigit():
+    print(f'Invalid SCAN_LIMIT: {scan_limit}', file=sys.stderr)
+    sys.exit(1)
+result = scanner.scan_all(limit=int(scan_limit))
 
-print(f\"\\nScan Results:\")
-print(f\"Total: {result['total']}\")
-print(f\"Scanned: {result['scanned']}\")
-print(f\"Skipped: {result['skipped']}\")
-print(f\"Failed: {result['failed']}\")
-print(f\"\\nRisk Distribution:\")
+print(f"\nScan Results:")
+print(f"Total: {result['total']}")
+print(f"Scanned: {result['scanned']}")
+print(f"Skipped: {result['skipped']}")
+print(f"Failed: {result['failed']}")
+print(f"\nRisk Distribution:")
 for risk, count in result['by_risk'].items():
     if count > 0:
-        print(f\"  {risk}: {count}\")
-"
+        print(f"  {risk}: {count}")
+PY
 
 log_success "Static scan complete!"
-log_info "Reports in: $WORKSPACE_DIR/{critical,high,medium,low,safe}/"
+log_info "Reports in: $WORKSPACE_DIR/static/{critical,high,medium,low,safe}/"

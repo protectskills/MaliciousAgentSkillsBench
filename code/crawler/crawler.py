@@ -16,7 +16,10 @@ from abc import ABC, abstractmethod
 from pathlib import Path
 from typing import List, Dict, Any, Optional
 
-from ..utils.config_loader import Config
+try:
+    from ..utils.config_loader import Config
+except ImportError:
+    from utils.config_loader import Config
 
 # Setup logging
 logging.basicConfig(
@@ -93,8 +96,8 @@ class SkillsRestCrawler(BaseCrawler):
         super().__init__('skills_rest', config)
 
         self.base_url = config.get('crawler.skills_rest.api_url', 'https://skills.rest/api/skills')
-        self.limit = config.get('crawler.skills_rest.limit', 60)
-        self.max_limit = config.get('crawler.skills_rest.max_limit', 300000)
+        self.limit = int(os.environ.get('SKILLS_REST_PAGE_LIMIT') or config.get('crawler.skills_rest.limit', 60))
+        self.max_limit = int(os.environ.get('SKILLS_REST_MAX_LIMIT') or config.get('crawler.skills_rest.max_limit', 300000))
 
         self.headers = {
             'accept': 'application/json',
@@ -110,6 +113,8 @@ class SkillsRestCrawler(BaseCrawler):
         offset = 0
         consecutive_empty = 0
         total_new = 0
+        consecutive_errors = 0
+        max_errors = int(os.environ.get('SKILLS_REST_MAX_ERRORS', '5'))
 
         logger.info(f"[Rest] Starting crawl, max_limit={self.max_limit}")
 
@@ -128,6 +133,7 @@ class SkillsRestCrawler(BaseCrawler):
 
                 if response.status_code == 200:
                     skills = response.json()
+                    consecutive_errors = 0
                     if not skills:
                         logger.info("No more data available")
                         break
@@ -151,11 +157,19 @@ class SkillsRestCrawler(BaseCrawler):
                     offset += self.limit
 
                 else:
-                    logger.warning(f"HTTP {response.status_code}, retrying...")
+                    consecutive_errors += 1
+                    logger.warning(f"HTTP {response.status_code}, retrying ({consecutive_errors}/{max_errors})...")
+                    if consecutive_errors >= max_errors:
+                        logger.error(f"Stopping after {consecutive_errors} consecutive HTTP errors")
+                        break
                     time.sleep(5)
 
             except Exception as e:
-                logger.error(f"Exception during fetch: {e}")
+                consecutive_errors += 1
+                logger.error(f"Exception during fetch: {e} ({consecutive_errors}/{max_errors})")
+                if consecutive_errors >= max_errors:
+                    logger.error(f"Stopping after {consecutive_errors} consecutive errors")
+                    break
                 time.sleep(5)
 
         logger.info(f"[Rest] Crawl complete, new items: {total_new}")
@@ -170,6 +184,9 @@ class SkillsmpCrawler(BaseCrawler):
 
         self.search_url = config.get('crawler.skillsmp.api_url', 'https://skillsmp.com/api/v1/skills/search')
         self.api_key = config.get_env('SKILLSMP_API_KEY', '')
+        self.limit = int(os.environ.get('SKILLSMP_PAGE_LIMIT', '100'))
+        self.max_items = int(os.environ.get('SKILLSMP_MAX_ITEMS', '0'))
+        self.max_pages_per_query = int(os.environ.get('SKILLSMP_MAX_PAGES_PER_QUERY', '0'))
 
         self.headers = {
             'Authorization': f'Bearer {self.api_key}',
@@ -177,7 +194,8 @@ class SkillsmpCrawler(BaseCrawler):
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
         }
 
-        self.search_chars = list(string.ascii_lowercase) + list(string.digits)
+        search_chars = os.environ.get('SKILLSMP_SEARCH_CHARS', '')
+        self.search_chars = list(search_chars) if search_chars else list(string.ascii_lowercase) + list(string.digits)
 
     def run(self) -> int:
         """Run the crawler
@@ -195,7 +213,7 @@ class SkillsmpCrawler(BaseCrawler):
 
         for char in self.search_chars:
             current_page = 1
-            limit = 100
+            limit = self.limit
             logger.info(f"Searching with character: '{char}'")
 
             while True:
@@ -244,6 +262,14 @@ class SkillsmpCrawler(BaseCrawler):
                             self.save_incrementally(new_items)
                             total_new += len(new_items)
                             logger.info(f"Page {current_page}: {len(new_items)} new items")
+
+                        if self.max_items and total_new >= self.max_items:
+                            logger.info(f"Reached SkillsMP item limit: {self.max_items}")
+                            return total_new
+
+                        if self.max_pages_per_query and current_page >= self.max_pages_per_query:
+                            logger.info(f"Reached SkillsMP page limit for query '{char}': {self.max_pages_per_query}")
+                            break
 
                         if not pagination.get('hasNext') or current_page >= total_pages:
                             break
@@ -393,6 +419,12 @@ class DataMerger:
 
     def _format_mp_item(self, mp_item: Dict) -> Dict:
         """Format MP item to match rest format"""
+        updated_at = mp_item.get('updatedAt', '')
+        if isinstance(updated_at, (int, float)):
+            updated_at = time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(updated_at))
+        elif updated_at is None:
+            updated_at = ''
+
         return {
             "id": mp_item.get('id'),
             "slug": mp_item.get('skillUrl', '').split('/')[-1],
@@ -416,7 +448,7 @@ class DataMerger:
             "hotness_score": 0,
             "status": "",
             "created_at": "",
-            "updated_at": time.strftime('%Y-%m-%d %H:%M:%S', time.localtime(mp_item.get('updatedAt', 0))),
+            "updated_at": str(updated_at),
             "keywords": [],
             "category_slug": "",
             "data_source": "skillsmp.com",

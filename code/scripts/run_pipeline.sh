@@ -28,10 +28,10 @@ steps=(
     "02_generate_mapping.sh"
     "03_download.sh"
     "04_scan.sh"
-    "05_gen_cc_queue.sh"
-    "06_cc_analyze.sh"
-    "07_gen_run_queue.sh"
-    "08_execute.sh"
+    "05_gen_run_queue.sh"
+    "06_execute.sh"
+    "07_gen_cc_queue.sh"
+    "08_cc_analyze.sh"
 )
 
 step_names=(
@@ -39,10 +39,10 @@ step_names=(
     "Generate Mapping"
     "Download"
     "Static Scan"
-    "Generate CC Queue"
-    "CC Analyze"
     "Generate Run Queue"
     "Dynamic Execute"
+    "Generate CC Queue"
+    "CC Analyze"
 )
 
 # Find starting step
@@ -64,6 +64,13 @@ for ((i=$start_index; i<${#steps[@]}; i++)); do
     step="${steps[$i]}"
     name="${step_names[$i]}"
 
+    if [[ "$step" == "07_gen_cc_queue.sh" || "$step" == "08_cc_analyze.sh" ]]; then
+        if [ "${ENABLE_CC_ANALYSIS:-false}" != "true" ]; then
+            log_warn "Skipping optional step: $name (set ENABLE_CC_ANALYSIS=true to run)"
+            continue
+        fi
+    fi
+
     log_info ""
     log_info "=========================================="
     log_info "Step $((i+1))/${#steps[@]}: $name"
@@ -80,7 +87,9 @@ log_info "Pipeline Complete!"
 log_info "=========================================="
 log_info ""
 log_info "Results:"
-log_info "  Scan Reports: $WORKSPACE_DIR/{critical,high,medium,low,safe}/"
-log_info "  CC Analysis: $SCAN_RESULTS_DIR/{SAFE,SUSPICIOUS,MALICIOUS}/"
+log_info "  Static Scan Reports: $WORKSPACE_DIR/static/{critical,high,medium,low,safe}/"
+if [ "${ENABLE_CC_ANALYSIS:-false}" = "true" ]; then
+    log_info "  CC Analysis: $SCAN_RESULTS_DIR/{SAFE,SUSPICIOUS,MALICIOUS}/"
+fi
 log_info "  Execution Logs: $EXECUTION_LOGS_DIR/"
 log_info ""

@@ -162,7 +162,7 @@ class Paths:
 
     @property
     def execution_logs_dir(self) -> Path:
-        return self.root / self.config.get("paths.execution_logs_dir", "./execution_logs")
+        return self.root / self.config.get("paths.execution_logs_dir", "./workspace/dynamic")
 
     @property
     def tasks_dir(self) -> Path:
@@ -176,13 +176,17 @@ class Paths:
     def repo_dir(self) -> Path:
         return self.workspace_dir / "repo"
 
+    @property
+    def static_scan_dir(self) -> Path:
+        return self.workspace_dir / "static"
+
     def get_risk_dir(self, risk_level: str) -> Path:
         """Get directory for specific risk level"""
         valid_levels = ["critical", "high", "medium", "low", "safe"]
         risk_level = risk_level.lower()
         if risk_level not in valid_levels:
             raise ValueError(f"Invalid risk level: {risk_level}")
-        return self.workspace_dir / risk_level
+        return self.static_scan_dir / risk_level
 
     def get_scan_result_dir(self, category: str) -> Path:
         """Get scan result directory for category"""
