@@ -13,6 +13,12 @@ gh release download sandbox-lite-v1 --pattern 'claude-skill-sandbox-lite.tar.gz'
 docker load -i claude-skill-sandbox-lite.tar.gz
 ```
 
+In restricted networks, `ghcr.io` and Docker Hub may fail before any project
+build step runs. Prefer the release asset plus `python3 helper.py build --mode
+load-tar` when GHCR is unavailable. If a local build fails while pulling
+`python:3.10-slim-bookworm`, fix Docker registry mirror access first and keep
+`/etc/docker/daemon.json` as valid JSON.
+
 Build locally from the `code/` directory only when customizing the image:
 
 ```bash

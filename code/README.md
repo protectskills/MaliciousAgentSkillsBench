@@ -179,6 +179,12 @@ and create temporary files or helper scripts when useful. Override it for
 stricter or larger experiments; `{skill_name}` is replaced with the current
 skill name.
 
+Set `EXEC_REPORT_MODE=true` for the advanced execution path. In this mode the
+executor asks Claude to write `claude_execution_report.md` during execution and
+append `MASB_FINAL_RESULT: completed` when finished. Helper runs use
+`EXEC_REPORT_TIMEOUT` in this mode, defaulting to a longer budget than the
+normal path.
+
 The generated `tasks/run_queue.txt` contains all discovered execution
 candidates. `RUN_QUEUE_LIMIT` controls how many pending entries are executed in
 one run, and `tasks/run_queue_state.jsonl` records completed and failed tasks so
@@ -198,7 +204,8 @@ If a skill reaches `EXEC_TIMEOUT` after NOVA has already produced an HTML
 report, the run is recorded as captured artifacts rather than a failed
 dynamic-monitoring run; entries with no substantive Claude output are marked
 separately. Set `RETRY_TIMEOUT_ARTIFACTS=true` with a larger `EXEC_TIMEOUT`
-to retry those entries.
+to retry those entries. In `EXEC_REPORT_MODE=true`, the execution report is
+stored as extra evidence on the same timeout-captured path.
 
 For large batches (default: more than `EXEC_QUIET_THRESHOLD=10` pending
 skills), the batch runner switches to quiet mode automatically: each skill's
@@ -241,7 +248,8 @@ helper is the recommended entry point for new reproductions.
 
 For local reproduction, use the host-auth executor.
 It runs Claude Code inside the Docker sandbox using a read-only mounted host
-Claude credential file, then writes per-run monitoring artifacts under a unique
+Claude credential file, or a Claude `settings.json` with Anthropic-compatible
+environment variables, then writes per-run monitoring artifacts under a unique
 run directory.
 
 Treat the mounted Claude credential as sensitive. Run untrusted skills with a
@@ -263,6 +271,7 @@ PROJECT_ROOT=$PWD \
 EXECUTION_LOGS_DIR=$PWD/workspace/dynamic \
 DOCKER_IMAGE=ghcr.io/protectskills/claude-skill-sandbox:lite \
 CLAUDE_CREDENTIALS_FILE="$HOME/.claude/.credentials.json" \
+CLAUDE_SETTINGS_FILE="$HOME/.claude/settings.json" \
 EXEC_TIMEOUT=240 \
 USE_NOVA=true \
 NOVA_BLOCK=false \
@@ -281,6 +290,7 @@ Expected artifacts:
 ```text
 workspace/dynamic/<risk>/<repo>/<skill>/<run-id>/
 ├── claude_output.txt
+├── claude_execution_report.md  # when EXEC_REPORT_MODE=true
 ├── strace.log
 ├── network.pcap
 ├── filesystem_changes.json
@@ -293,6 +303,12 @@ workspace/dynamic/<risk>/<repo>/<skill>/<run-id>/
 Treat NOVA sessions, HTML reports, Claude output, packet captures, and
 filesystem traces as sensitive experiment logs. They may include prompts, tool
 inputs/outputs, local paths, or secret-like strings printed by tools.
+
+If Claude exceeds `EXEC_TIMEOUT` after NOVA reports have been written, the
+batch runner records the task as captured artifacts rather than an uncaptured
+failure. Set `RETRY_TIMEOUT_ARTIFACTS=true` to retry those entries with a
+larger timeout. In `EXEC_REPORT_MODE=true`, timeouts with a non-empty execution
+report remain compatible with the same timeout-captured accounting.
 
 Current provider support is `AGENT_CLI=claude` with `AUTH_MODE=host_claude`.
 The legacy `run_skill.sh` API-token executor remains for compatibility, but the
@@ -340,7 +356,7 @@ tune crawler, scanner, analyzer, or executor internals.
 |----------|-------------|
 | `GITHUB_TOKEN` | GitHub token for repository access |
 | `SKILLSMP_API_KEY` | SkillsMP API key for the default crawl path |
-| `CLAUDE_CREDENTIALS_FILE` | Local Claude Code credentials file |
+| `CLAUDE_CREDENTIALS_FILE`, `CLAUDE_SETTINGS_FILE` | Local Claude Code credentials file, or settings file with Anthropic-compatible env auth |
 | `CC_MODEL`, `CC_JOBS` | Claude Code model and parallel job count for optional triage |
 | `CC_RISK_LEVELS` | Static-scan risk buckets sent to CC triage (default `low medium high critical safe`) |
 | `SKIP_CRAWL`, `SKIP_REST_CRAWL`, `REQUIRE_CRAWL_ITEMS` | Crawl phase controls; `REQUIRE_CRAWL_ITEMS=true` (default) fails step 1 when no items are collected |
@@ -349,6 +365,7 @@ tune crawler, scanner, analyzer, or executor internals.
 | `RUN_QUEUE_SOURCE`, `RUN_FROM_RISKS`, `RUN_FROM_CATEGORIES` | Execution queue source and filters |
 | `RUN_QUEUE_STATE_FILE`, `RETRY_TIMEOUT_ARTIFACTS` | Execution state file and optional retry of timeout entries that already captured NOVA artifacts |
 | `RUN_PROMPT_TEMPLATE` | Dynamic execution prompt template |
+| `EXEC_REPORT_MODE`, `EXEC_REPORT_TIMEOUT` | Advanced execution-report contract and longer timeout budget |
 | `DOCKER_CMD`, `DOCKER_IMAGE`, `NODE_MAJOR`, `EXEC_WORKERS`, `EXEC_TIMEOUT` | Sandbox image/runtime settings; set `DOCKER_CMD='sudo docker'` only when the current user cannot access the Docker daemon directly. `EXEC_TIMEOUT` is the inner Claude CLI budget (host bounds the whole `docker run` at `EXEC_TIMEOUT + 180s`) |
 | `EXEC_QUIET`, `EXEC_QUIET_THRESHOLD` | `auto`/`true`/`false` (default `auto`); auto goes quiet when pending tasks > threshold (default 10). Quiet mode redirects per-skill subprocess output to `logs/exec/` and prints one status line per skill. |
 | `USE_NOVA`, `NOVA_PROFILE`, `NOVA_PROVIDER`, `NOVA_BLOCK` | Runtime NOVA toggles (provider defaults to `tracer`; block defaults to `false`) |

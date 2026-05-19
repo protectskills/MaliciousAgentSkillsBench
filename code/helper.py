@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import os
 import re
+import json
 import shlex
 import shutil
 import subprocess
@@ -55,6 +56,8 @@ DEFAULTS = {
     "NODE_MAJOR": "22",
     "EXEC_WORKERS": "1",
     "EXEC_TIMEOUT": "240",
+    "EXEC_REPORT_MODE": "false",
+    "EXEC_REPORT_TIMEOUT": "480",
     "RETRY_TIMEOUT_ARTIFACTS": "false",
     "ALLOW_EXECUTION_FAILURES": "false",
     "EXEC_QUIET": "auto",
@@ -69,6 +72,16 @@ DEFAULTS = {
         "as possible, and summarize what was tested and what happened. Do not ask "
         "follow-up questions unless execution is impossible."
     ),
+}
+
+CLAUDE_SETTINGS_ENV_KEYS = {
+    "ANTHROPIC_AUTH_TOKEN",
+    "ANTHROPIC_API_KEY",
+    "ANTHROPIC_BASE_URL",
+    "ANTHROPIC_MODEL",
+    "ANTHROPIC_SMALL_FAST_MODEL",
+    "CLAUDE_CODE_USE_BEDROCK",
+    "CLAUDE_CODE_USE_VERTEX",
 }
 
 
@@ -163,9 +176,8 @@ def env_hints(env: Dict[str, str]) -> List[str]:
     hints = []
     if not env.get("SKILLSMP_API_KEY"):
         hints.append("Run `python3 helper.py init` and set SKILLSMP_API_KEY for the default crawl path.")
-    cred = expand_path(env.get("CLAUDE_CREDENTIALS_FILE", ""))
-    if not cred or not cred.exists():
-        hints.append("Run Claude Code locally or set CLAUDE_CREDENTIALS_FILE before dynamic execution.")
+    if not claude_auth_available(env):
+        hints.append("Run Claude Code locally, set CLAUDE_CREDENTIALS_FILE, or set CLAUDE_SETTINGS_FILE with Claude env auth before dynamic execution.")
     docker = docker_cmd(env)
     if not command_exists(docker[0]):
         hints.append(f"Install Docker before sandboxed dynamic execution, or fix DOCKER_CMD={env.get('DOCKER_CMD')!r}.")
@@ -314,6 +326,10 @@ def docker_cmd(env: Dict[str, str] | None = None) -> List[str]:
     return parts or ["docker"]
 
 
+def is_enabled(value: str | None) -> bool:
+    return str(value or "").lower() in {"true", "1", "yes", "y", "on"}
+
+
 def print_check(label: str, ok: bool, detail: str = "") -> None:
     mark = click.style("OK", fg="green") if ok else click.style("MISSING", fg="red")
     suffix = f" - {detail}" if detail else ""
@@ -331,7 +347,47 @@ def find_claude_credentials() -> str:
     return ""
 
 
+def find_claude_settings() -> str:
+    path = Path.home() / ".claude" / "settings.json"
+    return str(path) if path.exists() else ""
+
+
+def load_claude_settings_env(path_value: str | None) -> Dict[str, str]:
+    path = expand_path(path_value)
+    if not path or not path.exists():
+        return {}
+    try:
+        data = json.loads(path.read_text(encoding="utf-8"))
+    except Exception:
+        return {}
+    env = data.get("env", {})
+    if not isinstance(env, dict):
+        return {}
+    return {
+        key: value
+        for key, value in env.items()
+        if key in CLAUDE_SETTINGS_ENV_KEYS and isinstance(value, str) and value
+    }
+
+
+def claude_auth_available(env: Dict[str, str]) -> bool:
+    cred = expand_path(env.get("CLAUDE_CREDENTIALS_FILE", ""))
+    if cred and cred.exists():
+        return True
+    settings_file = env.get("CLAUDE_SETTINGS_FILE") or find_claude_settings()
+    settings_env = load_claude_settings_env(settings_file)
+    return bool(settings_env.get("ANTHROPIC_AUTH_TOKEN") or settings_env.get("ANTHROPIC_API_KEY"))
+
+
+def effective_exec_timeout(env: Dict[str, str]) -> str:
+    if is_enabled(env.get("EXEC_REPORT_MODE", "false")):
+        return env.get("EXEC_REPORT_TIMEOUT", DEFAULTS["EXEC_REPORT_TIMEOUT"])
+    return env.get("EXEC_TIMEOUT", DEFAULTS["EXEC_TIMEOUT"])
+
+
 def commands_for_run(env: Dict[str, str]) -> List[Tuple[Dict[str, str], List[str]]]:
+    exec_timeout = effective_exec_timeout(env)
+    exec_report_mode = "true" if is_enabled(env.get("EXEC_REPORT_MODE")) else "false"
     steps = [
         ({}, ["bash", "scripts/01_crawl.sh"]),
         (
@@ -354,7 +410,8 @@ def commands_for_run(env: Dict[str, str]) -> List[Tuple[Dict[str, str], List[str
                 "EXEC_WORKERS": env["EXEC_WORKERS"],
                 "USE_NOVA": env["USE_NOVA"],
                 "NOVA_PROFILE": env["NOVA_PROFILE"],
-                "EXEC_TIMEOUT": env["EXEC_TIMEOUT"],
+                "EXEC_TIMEOUT": exec_timeout,
+                "EXEC_REPORT_MODE": exec_report_mode,
                 "DOCKER_IMAGE": env["DOCKER_IMAGE"],
                 "RUN_QUEUE_LIMIT": env["RUN_QUEUE_LIMIT"],
                 "RUN_QUEUE_STATE_FILE": env.get("RUN_QUEUE_STATE_FILE", str(ROOT / "tasks" / "run_queue_state.jsonl")),
@@ -491,7 +548,8 @@ def continue_execution(env: Dict[str, str]) -> None:
             limit = click.prompt("Skills to execute this round (0 means all pending)", type=int, default=default_limit)
             default_workers = int(env.get("EXEC_WORKERS", "1") or "1")
             workers = click.prompt("Workers", type=int, default=default_workers)
-            default_timeout = int(env.get("EXEC_TIMEOUT", DEFAULTS["EXEC_TIMEOUT"]) or DEFAULTS["EXEC_TIMEOUT"])
+            timeout_key = "EXEC_REPORT_TIMEOUT" if is_enabled(env.get("EXEC_REPORT_MODE")) else "EXEC_TIMEOUT"
+            default_timeout = int(env.get(timeout_key, DEFAULTS[timeout_key]) or DEFAULTS[timeout_key])
             timeout = click.prompt("Timeout seconds", type=int, default=default_timeout)
         except (click.Abort, EOFError):
             return
@@ -503,6 +561,7 @@ def continue_execution(env: Dict[str, str]) -> None:
                 "RUN_QUEUE_STATE_FILE": str(state_file),
                 "EXEC_WORKERS": str(workers),
                 "EXEC_TIMEOUT": str(timeout),
+                "EXEC_REPORT_MODE": "true" if is_enabled(env.get("EXEC_REPORT_MODE")) else "false",
             }
         )
         code = run(["bash", "scripts/06_execute.sh"], env=step_env)
@@ -565,6 +624,7 @@ def init(ctx: click.Context) -> None:
     values["SKILLSMP_API_KEY"] = ask_secret_value("SkillsMP API key", values.get("SKILLSMP_API_KEY", ""), required=True)
     values["GITHUB_TOKEN"] = ask_secret_value("GitHub token (optional)", values.get("GITHUB_TOKEN", ""))
     default_cred = values.get("CLAUDE_CREDENTIALS_FILE") or find_claude_credentials()
+    default_settings = values.get("CLAUDE_SETTINGS_FILE") or find_claude_settings()
     if default_cred:
         cred_value = ask_value("Claude credentials file", default_cred)
     else:
@@ -572,6 +632,10 @@ def init(ctx: click.Context) -> None:
         cred_value = ask_value("Claude credentials file", "")
     if cred_value:
         values["CLAUDE_CREDENTIALS_FILE"] = str(Path(cred_value).expanduser())
+    if default_settings:
+        settings_value = ask_value("Claude settings file", default_settings)
+        if settings_value:
+            values["CLAUDE_SETTINGS_FILE"] = str(Path(settings_value).expanduser())
     values["ENABLE_CC_ANALYSIS"] = "true" if click.confirm("Enable optional Claude Code analysis after dynamic execution?", default=False) else "false"
     if values["ENABLE_CC_ANALYSIS"] == "true":
         values["CC_MODEL"] = ask_value("Claude Code model", values.get("CC_MODEL", DEFAULTS["CC_MODEL"]))
@@ -608,6 +672,8 @@ def config(ctx: click.Context) -> None:
         "RUN_QUEUE_STATE_FILE",
         "EXEC_WORKERS",
         "EXEC_TIMEOUT",
+        "EXEC_REPORT_MODE",
+        "EXEC_REPORT_TIMEOUT",
         "RETRY_TIMEOUT_ARTIFACTS",
         "ALLOW_EXECUTION_FAILURES",
         "CC_MODEL",
@@ -633,6 +699,10 @@ def print_status(env_file: Path) -> None:
     cred_path = expand_path(cred)
     cred_status = "exists" if cred_path and cred_path.exists() else "missing"
     click.echo(f"Claude credentials: {mask_path(cred)} ({cred_status})")
+    settings = env.get("CLAUDE_SETTINGS_FILE") or find_claude_settings()
+    settings_env = load_claude_settings_env(settings)
+    settings_status = "auth env found" if settings_env else "not configured"
+    click.echo(f"Claude settings: {mask_path(settings)} ({settings_status})")
     click.echo(f"SkillsMP key: {mask_value(env.get('SKILLSMP_API_KEY'))}")
     if env.get("GITHUB_TOKEN"):
         click.echo(f"GitHub token: {mask_value(env.get('GITHUB_TOKEN'))}")
@@ -646,6 +716,8 @@ def print_status(env_file: Path) -> None:
         f"exec_limit={env.get('RUN_QUEUE_LIMIT')} "
         f"workers={env.get('EXEC_WORKERS')} "
         f"timeout={env.get('EXEC_TIMEOUT')}s "
+        f"report_mode={env.get('EXEC_REPORT_MODE')} "
+        f"report_timeout={env.get('EXEC_REPORT_TIMEOUT')}s "
         f"retry_artifact_timeouts={env.get('RETRY_TIMEOUT_ARTIFACTS', 'false')} "
         f"allow_failures={env.get('ALLOW_EXECUTION_FAILURES', 'false')}"
     )
@@ -689,9 +761,17 @@ def doctor(ctx: click.Context) -> None:
     skillsmp = env.get("SKILLSMP_API_KEY", "")
     print_check("SKILLSMP_API_KEY", bool(skillsmp), "required for default crawl path")
 
+    settings_value = env.get("CLAUDE_SETTINGS_FILE") or find_claude_settings()
+    settings_env = load_claude_settings_env(settings_value)
+    settings_auth = bool(settings_env.get("ANTHROPIC_AUTH_TOKEN") or settings_env.get("ANTHROPIC_API_KEY"))
+    settings_detail = mask_path(settings_value)
+    if settings_env:
+        settings_detail += f" ({', '.join(sorted(settings_env))})"
     cred_value = env.get("CLAUDE_CREDENTIALS_FILE", "")
     cred = expand_path(cred_value)
-    print_check("Claude credentials", bool(cred and cred.exists()), mask_path(cred_value))
+    cred_ok = bool(cred and cred.exists())
+    auth_detail = f"credentials={mask_path(cred_value)}; settings={settings_detail}"
+    print_check("Claude auth source", cred_ok or settings_auth, auth_detail)
 
     docker = docker_cmd(env)
     docker_cli = command_exists(docker[0])
@@ -778,9 +858,22 @@ def build(ctx: click.Context, mode: str | None, verbose: bool) -> None:
         if not tar_path.exists():
             raise click.ClickException(f"Image archive not found: {tar_path}")
         load_cmd = docker + ["load", "-i", str(tar_path)]
-        code = run(load_cmd, env=env)
-        if code != 0:
-            raise click.ClickException(f"Docker load failed with exit code {code}")
+        click.echo(click.style("$ " + " ".join(load_cmd), fg="cyan"))
+        result = subprocess.run(load_cmd, cwd=ROOT, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True)
+        if result.stdout:
+            click.echo(result.stdout.rstrip())
+        if result.returncode != 0:
+            raise click.ClickException(f"Docker load failed with exit code {result.returncode}")
+        loaded = re.findall(r"Loaded image:\s*(\S+)", result.stdout or "")
+        if loaded:
+            env_file: Path = ctx.obj["env_file"]
+            values = dict(DEFAULTS)
+            values.update(load_env(env_file))
+            values["DOCKER_IMAGE"] = loaded[-1]
+            write_env(env_file, values)
+            click.echo(click.style(f"Updated DOCKER_IMAGE={loaded[-1]} in {env_file}", fg="green"))
+        else:
+            click.echo(click.style("Docker load completed, but no image tag was reported; DOCKER_IMAGE was not changed.", fg="yellow"))
         return
 
     if mode == "lite" and image == DEFAULTS["DOCKER_IMAGE"]:
@@ -823,9 +916,10 @@ def run_experiment(ctx: click.Context, analyze: bool | None, quiet: bool | None)
         env["EXEC_QUIET"] = "true" if quiet else "false"
     if not env.get("SKILLSMP_API_KEY"):
         raise click.ClickException("SKILLSMP_API_KEY is required. Run: python3 helper.py init")
-    cred = expand_path(env.get("CLAUDE_CREDENTIALS_FILE", ""))
-    if not cred or not cred.exists():
-        raise click.ClickException("Claude login was not found. Run Claude Code locally or set CLAUDE_CREDENTIALS_FILE.")
+    if not claude_auth_available(env):
+        raise click.ClickException("Claude login was not found. Run Claude Code locally, set CLAUDE_CREDENTIALS_FILE, or set CLAUDE_SETTINGS_FILE.")
+    if is_enabled(env.get("EXEC_REPORT_MODE", "false")):
+        env["EXEC_TIMEOUT"] = env.get("EXEC_REPORT_TIMEOUT", DEFAULTS["EXEC_REPORT_TIMEOUT"])
 
     print_banner()
     analysis_enabled = env.get("ENABLE_CC_ANALYSIS", "false").lower() == "true"
@@ -886,9 +980,8 @@ def exec_queue(ctx: click.Context, queue_file: Path, workers: int | None, dry_ru
         click.echo(click.style("Dry run only; Docker was not started.", fg="yellow"))
         return
 
-    cred = expand_path(env.get("CLAUDE_CREDENTIALS_FILE", ""))
-    if not cred or not cred.exists():
-        raise click.ClickException("Claude login was not found. Run Claude Code locally or set CLAUDE_CREDENTIALS_FILE.")
+    if not claude_auth_available(env):
+        raise click.ClickException("Claude login was not found. Run Claude Code locally, set CLAUDE_CREDENTIALS_FILE, or set CLAUDE_SETTINGS_FILE.")
 
     exec_workers = workers or int(env.get("EXEC_WORKERS", "1"))
     cmd = ["python3", "executor/batch_runner.py", str(queue_file), "--workers", str(exec_workers)]
@@ -899,7 +992,8 @@ def exec_queue(ctx: click.Context, queue_file: Path, workers: int | None, dry_ru
             "EXEC_WORKERS": str(exec_workers),
             "USE_NOVA": env["USE_NOVA"],
             "NOVA_PROFILE": env["NOVA_PROFILE"],
-            "EXEC_TIMEOUT": env["EXEC_TIMEOUT"],
+            "EXEC_TIMEOUT": effective_exec_timeout(env),
+            "EXEC_REPORT_MODE": "true" if is_enabled(env.get("EXEC_REPORT_MODE")) else "false",
         }
     )
     if quiet is not None:
