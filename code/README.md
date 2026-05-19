@@ -107,13 +107,13 @@ cd MaliciousAgentSkillsBench/code
 pip install -r requirements.txt
 ```
 
-3. Build Docker sandbox image (for dynamic execution):
+3. Pull the default Docker sandbox image (for dynamic execution):
 ```bash
-docker build --build-arg NOVA_MODE=lite -t claude-skill-sandbox -f Dockerfile .
+docker pull ghcr.io/protectskills/claude-skill-sandbox:lite
 ```
 
-See [DOCKER_BUILD.md](DOCKER_BUILD.md) for `none`, `lite`, and `full` build
-modes.
+The helper menu can pull this image for the default `lite` path. See
+[DOCKER_BUILD.md](DOCKER_BUILD.md) for local `none`, `lite`, and `full` builds.
 
 4. Configure and run through the interactive helper:
 ```bash
@@ -121,7 +121,7 @@ python3 helper.py
 ```
 
 The menu provides the common workflow: initialize `.env`, check dependencies
-and credentials, build the Docker sandbox, run the default small-batch
+and credentials, pull or build the Docker sandbox, run the default small-batch
 experiment, inspect status, adjust common configuration, and clean runtime
 outputs. It also offers a continuation prompt after dynamic execution so you
 can run more pending skills without repeating crawl/download/scan.
@@ -155,14 +155,14 @@ export SKILLSMP_MAX_ITEMS=30
 export SKILLSMP_PAGE_LIMIT=30
 export SKILLSMP_MAX_PAGES_PER_QUERY=1
 
-docker build --build-arg NOVA_MODE=lite -t claude-skill-sandbox -f Dockerfile .
+docker pull ghcr.io/protectskills/claude-skill-sandbox:lite
 
 bash scripts/01_crawl.sh
 DOWNLOAD_LIMIT=5 SCAN_LIMIT=5 bash scripts/02_generate_mapping.sh
 DOWNLOAD_LIMIT=5 bash scripts/03_download.sh
 SCAN_LIMIT=5 bash scripts/04_scan.sh
 RUN_QUEUE_SOURCE=static RUN_FROM_RISKS="critical high medium low safe" bash scripts/05_gen_run_queue.sh
-SKILL_EXECUTOR=hostauth EXEC_WORKERS=1 RUN_QUEUE_LIMIT=1 USE_NOVA=true NOVA_PROFILE=record EXEC_TIMEOUT=240 bash scripts/06_execute.sh
+DOCKER_IMAGE=ghcr.io/protectskills/claude-skill-sandbox:lite SKILL_EXECUTOR=hostauth EXEC_WORKERS=1 RUN_QUEUE_LIMIT=1 USE_NOVA=true NOVA_PROFILE=record EXEC_TIMEOUT=240 bash scripts/06_execute.sh
 ```
 
 To run optional Claude Code analysis after dynamic execution:
@@ -254,12 +254,13 @@ untrusted or malicious skills from a disposable VM/host and a disposable
 Claude login.
 
 ```bash
-# Build the sandbox with NOVA hook recording
-docker build --build-arg NOVA_MODE=lite -t claude-skill-sandbox -f Dockerfile .
+# Pull the default sandbox with NOVA hook recording
+docker pull ghcr.io/protectskills/claude-skill-sandbox:lite
 
 # Execute one real skill
 PROJECT_ROOT=$PWD \
 EXECUTION_LOGS_DIR=$PWD/workspace/dynamic \
+DOCKER_IMAGE=ghcr.io/protectskills/claude-skill-sandbox:lite \
 CLAUDE_CREDENTIALS_FILE="$HOME/.claude/.credentials.json" \
 EXEC_TIMEOUT=240 \
 USE_NOVA=true \
