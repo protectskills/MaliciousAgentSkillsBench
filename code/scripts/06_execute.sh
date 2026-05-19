@@ -35,7 +35,9 @@ RUN_QUEUE_LIMIT="${RUN_QUEUE_LIMIT:-0}"
 
 # Check Docker image
 DOCKER_IMAGE="${DOCKER_IMAGE:-claude-skill-sandbox}"
-if ! docker image inspect "$DOCKER_IMAGE" &>/dev/null; then
+DOCKER_CMD="${DOCKER_CMD:-docker}"
+read -r -a DOCKER_CMD_ARRAY <<< "$DOCKER_CMD"
+if ! "${DOCKER_CMD_ARRAY[@]}" image inspect "$DOCKER_IMAGE" &>/dev/null; then
     if [ "${SKIP_EXECUTION:-false}" = "true" ]; then
         log_warn "Docker image '$DOCKER_IMAGE' not found; SKIP_EXECUTION=true, skipping execution"
         exit 0
