@@ -84,6 +84,14 @@ CLAUDE_SETTINGS_ENV_KEYS = {
     "CLAUDE_CODE_USE_VERTEX",
 }
 
+ENV_WRITEBACK_KEYS = {
+    "SKILLSMP_API_KEY",
+    "GITHUB_TOKEN",
+    "CLAUDE_CREDENTIALS_FILE",
+    "CLAUDE_SETTINGS_FILE",
+    "DOCKER_CMD",
+}
+
 
 def load_env(path: Path) -> Dict[str, str]:
     values: Dict[str, str] = {}
@@ -116,6 +124,15 @@ def write_env(path: Path, values: Dict[str, str]) -> None:
             lines.append(f"{key}={shlex.quote(values[key])}")
     path.write_text("\n".join(lines) + "\n", encoding="utf-8")
     path.chmod(0o600)
+
+
+def env_file_values_for_update(env_file: Path, active_env: Dict[str, str]) -> Dict[str, str]:
+    values = dict(DEFAULTS)
+    values.update(load_env(env_file))
+    for key in ENV_WRITEBACK_KEYS:
+        if active_env.get(key):
+            values[key] = active_env[key]
+    return values
 
 
 def merged_env(path: Path) -> Dict[str, str]:
@@ -154,6 +171,17 @@ def expand_path(value: str | None) -> Path | None:
     if not value:
         return None
     return Path(value).expanduser()
+
+
+def resolve_input_path(value: str, base: Path = ROOT) -> Path:
+    path = Path(value).expanduser()
+    if path.is_absolute() or path.exists():
+        return path
+    candidates = [base / path, base.parent / path]
+    for candidate in candidates:
+        if candidate.exists():
+            return candidate
+    return path
 
 
 def ask_secret_value(label: str, current: str = "", required: bool = False) -> str:
@@ -854,7 +882,7 @@ def build(ctx: click.Context, mode: str | None, verbose: bool) -> None:
     image = env.get("DOCKER_IMAGE", DEFAULTS["DOCKER_IMAGE"])
     if mode == "load-tar":
         default_tar = ROOT / "docker-images" / "claude-skill-sandbox-lite.tar.gz"
-        tar_path = Path(ask_value("Image tar or tar.gz file", str(default_tar))).expanduser()
+        tar_path = resolve_input_path(ask_value("Image tar or tar.gz file", str(default_tar)))
         if not tar_path.exists():
             raise click.ClickException(f"Image archive not found: {tar_path}")
         load_cmd = docker + ["load", "-i", str(tar_path)]
@@ -867,8 +895,7 @@ def build(ctx: click.Context, mode: str | None, verbose: bool) -> None:
         loaded = re.findall(r"Loaded image:\s*(\S+)", result.stdout or "")
         if loaded:
             env_file: Path = ctx.obj["env_file"]
-            values = dict(DEFAULTS)
-            values.update(load_env(env_file))
+            values = env_file_values_for_update(env_file, env)
             values["DOCKER_IMAGE"] = loaded[-1]
             write_env(env_file, values)
             click.echo(click.style(f"Updated DOCKER_IMAGE={loaded[-1]} in {env_file}", fg="green"))
