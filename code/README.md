@@ -112,8 +112,9 @@ pip install -r requirements.txt
 docker pull ghcr.io/protectskills/claude-skill-sandbox:lite
 ```
 
-The helper menu can pull this image for the default `lite` path. See
-[DOCKER_BUILD.md](DOCKER_BUILD.md) for local `none`, `lite`, and `full` builds.
+If registry access is unreliable, download `claude-skill-sandbox-lite.tar.gz`
+from the GitHub release `sandbox-lite-v1` and use helper image mode `load-tar`.
+See [DOCKER_BUILD.md](DOCKER_BUILD.md) for offline import and local builds.
 
 4. Configure and run through the interactive helper:
 ```bash
