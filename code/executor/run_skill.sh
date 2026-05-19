@@ -19,6 +19,8 @@ NOVA_BLOCK="${NOVA_BLOCK:-false}"
 NOVA_PROFILE="${NOVA_PROFILE:-record}"
 TIMEOUT="${EXEC_TIMEOUT:-900}"
 DOCKER_IMAGE="${DOCKER_IMAGE:-claude-skill-sandbox}"
+DOCKER_CMD="${DOCKER_CMD:-docker}"
+read -r -a DOCKER_CMD_ARRAY <<< "$DOCKER_CMD"
 
 # Get API key
 if [ -n "$ANTHROPIC_API_KEY" ]; then
@@ -62,7 +64,7 @@ else
 fi
 
 # Run Docker container
-docker run --rm -it \
+"${DOCKER_CMD_ARRAY[@]}" run --rm -it \
     --name "$CONTAINER_NAME" \
     --cap-add=SYS_ADMIN \
     --cap-add=NET_ADMIN \

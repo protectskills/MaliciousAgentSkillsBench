@@ -20,6 +20,7 @@ NOVA_PROVIDER="${NOVA_PROVIDER:-tracer}"
 NOVA_PROFILE="${NOVA_PROFILE:-record}"
 TIMEOUT="${EXEC_TIMEOUT:-900}"
 DOCKER_IMAGE="${DOCKER_IMAGE:-claude-skill-sandbox}"
+DOCKER_CMD="${DOCKER_CMD:-docker}"
 AGENT_CLI="${AGENT_CLI:-claude}"
 AUTH_MODE="${AUTH_MODE:-host_claude}"
 RUN_ID="${RUN_ID:-$(date +%Y%m%d_%H%M%S)_$$}"
@@ -72,9 +73,15 @@ if ! command -v docker >/dev/null 2>&1; then
     exit 1
 fi
 
-if ! docker image inspect "$DOCKER_IMAGE" >/dev/null 2>&1; then
+read -r -a DOCKER_CMD_ARRAY <<< "$DOCKER_CMD"
+if ! command -v "${DOCKER_CMD_ARRAY[0]}" >/dev/null 2>&1; then
+    echo "Error: Docker command not found: ${DOCKER_CMD_ARRAY[0]}"
+    exit 1
+fi
+
+if ! "${DOCKER_CMD_ARRAY[@]}" image inspect "$DOCKER_IMAGE" >/dev/null 2>&1; then
     echo "Error: Docker image '$DOCKER_IMAGE' not found"
-    echo "Build it with: docker build --build-arg NOVA_MODE=lite -t $DOCKER_IMAGE -f Dockerfile ."
+    echo "Build it with: $DOCKER_CMD build --build-arg NOVA_MODE=lite -t $DOCKER_IMAGE -f Dockerfile ."
     exit 1
 fi
 
@@ -110,10 +117,10 @@ echo "Auth: $AUTH_MODE via read-only host credentials"
 # Host-side safety net: bound the whole docker run by EXEC_TIMEOUT + 180s, and
 # guarantee the container is removed even if `timeout` had to kill the client.
 HOST_TIMEOUT=$((TIMEOUT + 180))
-trap 'docker rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true' EXIT
+trap '"${DOCKER_CMD_ARRAY[@]}" rm -f "$CONTAINER_NAME" >/dev/null 2>&1 || true' EXIT
 
 set +e
-timeout --kill-after=10s "${HOST_TIMEOUT}s" docker run --rm -i \
+timeout --kill-after=10s "${HOST_TIMEOUT}s" "${DOCKER_CMD_ARRAY[@]}" run --rm -i \
     --name "$CONTAINER_NAME" \
     --user root \
     --cap-add=SYS_ADMIN \

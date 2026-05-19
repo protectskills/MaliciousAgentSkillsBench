@@ -347,7 +347,7 @@ tune crawler, scanner, analyzer, or executor internals.
 | `RUN_QUEUE_SOURCE`, `RUN_FROM_RISKS`, `RUN_FROM_CATEGORIES` | Execution queue source and filters |
 | `RUN_QUEUE_STATE_FILE`, `RETRY_TIMEOUT_ARTIFACTS` | Execution state file and optional retry of timeout entries that already captured NOVA artifacts |
 | `RUN_PROMPT_TEMPLATE` | Dynamic execution prompt template |
-| `DOCKER_IMAGE`, `NODE_MAJOR`, `EXEC_WORKERS`, `EXEC_TIMEOUT` | Sandbox image/runtime settings; `EXEC_TIMEOUT` is the inner Claude CLI budget (host bounds the whole `docker run` at `EXEC_TIMEOUT + 180s`) |
+| `DOCKER_CMD`, `DOCKER_IMAGE`, `NODE_MAJOR`, `EXEC_WORKERS`, `EXEC_TIMEOUT` | Sandbox image/runtime settings; set `DOCKER_CMD='sudo docker'` only when the current user cannot access the Docker daemon directly. `EXEC_TIMEOUT` is the inner Claude CLI budget (host bounds the whole `docker run` at `EXEC_TIMEOUT + 180s`) |
 | `EXEC_QUIET`, `EXEC_QUIET_THRESHOLD` | `auto`/`true`/`false` (default `auto`); auto goes quiet when pending tasks > threshold (default 10). Quiet mode redirects per-skill subprocess output to `logs/exec/` and prints one status line per skill. |
 | `USE_NOVA`, `NOVA_PROFILE`, `NOVA_PROVIDER`, `NOVA_BLOCK` | Runtime NOVA toggles (provider defaults to `tracer`; block defaults to `false`) |
 | `NOVA_MODE` | Docker build mode (`none`, `lite`, or `full`); set at image build time, not runtime |

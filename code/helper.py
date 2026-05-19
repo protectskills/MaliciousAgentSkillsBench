@@ -50,6 +50,7 @@ DEFAULTS = {
     "RUN_FROM_RISKS": "critical high medium low safe",
     "RUN_QUEUE_LIMIT": "1",
     "SKILL_EXECUTOR": "hostauth",
+    "DOCKER_CMD": "docker",
     "DOCKER_IMAGE": "claude-skill-sandbox",
     "NODE_MAJOR": "22",
     "EXEC_WORKERS": "1",
@@ -136,6 +137,12 @@ def mask_path(value: str | None) -> str:
     return f".../{parent}/{path.name}"
 
 
+def expand_path(value: str | None) -> Path | None:
+    if not value:
+        return None
+    return Path(value).expanduser()
+
+
 def ask_secret_value(label: str, current: str = "", required: bool = False) -> str:
     state = f"configured ({mask_value(current)})" if current else "not configured"
     click.echo(f"{label}: {state}")
@@ -156,18 +163,50 @@ def env_hints(env: Dict[str, str]) -> List[str]:
     hints = []
     if not env.get("SKILLSMP_API_KEY"):
         hints.append("Run `python3 helper.py init` and set SKILLSMP_API_KEY for the default crawl path.")
-    cred = env.get("CLAUDE_CREDENTIALS_FILE", "")
-    if not cred or not Path(cred).exists():
+    cred = expand_path(env.get("CLAUDE_CREDENTIALS_FILE", ""))
+    if not cred or not cred.exists():
         hints.append("Run Claude Code locally or set CLAUDE_CREDENTIALS_FILE before dynamic execution.")
-    if not command_exists("docker"):
-        hints.append("Install Docker before sandboxed dynamic execution.")
+    docker = docker_cmd(env)
+    if not command_exists(docker[0]):
+        hints.append(f"Install Docker before sandboxed dynamic execution, or fix DOCKER_CMD={env.get('DOCKER_CMD')!r}.")
+    elif not docker_access_ok(docker):
+        hints.append("Docker is installed but this Docker command cannot access the daemon. Add the user to the docker group and start a new login shell, run helper with sudo, or set DOCKER_CMD='sudo docker'.")
     elif subprocess.call(
-        ["docker", "image", "inspect", env.get("DOCKER_IMAGE", "claude-skill-sandbox")],
+        docker + ["image", "inspect", env.get("DOCKER_IMAGE", "claude-skill-sandbox")],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     ) != 0:
         hints.append("Run `python3 helper.py build --mode lite` or set DOCKER_IMAGE to an existing image.")
     return hints
+
+
+def docker_access_ok(cmd: List[str] | None = None) -> bool:
+    cmd = cmd or ["docker"]
+    if not command_exists(cmd[0]):
+        return False
+    return subprocess.call(
+        cmd + ["info"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    ) == 0
+
+
+def docker_access_detail(cmd: List[str] | None = None) -> str:
+    cmd = cmd or ["docker"]
+    if not command_exists(cmd[0]):
+        return f"{cmd[0]} command not found"
+    result = subprocess.run(
+        cmd + ["info"],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.PIPE,
+        text=True,
+    )
+    if result.returncode == 0:
+        return "daemon accessible"
+    detail = " ".join((result.stderr or "").split())
+    if "permission denied" in detail.lower() or "docker.sock" in detail:
+        return "permission denied for Docker daemon socket; add this user to the docker group and re-login, run helper with sudo, or set DOCKER_CMD='sudo docker'"
+    return detail or f"docker info failed with exit code {result.returncode}"
 
 
 def summarize_docker_step(raw_step: str) -> str:
@@ -264,6 +303,15 @@ def ask_value(label: str, default: str = "", secret: bool = False) -> str:
 
 def command_exists(name: str) -> bool:
     return shutil.which(name) is not None
+
+
+def docker_cmd(env: Dict[str, str] | None = None) -> List[str]:
+    value = (env or {}).get("DOCKER_CMD", DEFAULTS["DOCKER_CMD"])
+    try:
+        parts = shlex.split(value)
+    except ValueError as exc:
+        raise click.ClickException(f"Invalid DOCKER_CMD={value!r}: {exc}") from exc
+    return parts or ["docker"]
 
 
 def print_check(label: str, ok: bool, detail: str = "") -> None:
@@ -518,10 +566,12 @@ def init(ctx: click.Context) -> None:
     values["GITHUB_TOKEN"] = ask_secret_value("GitHub token (optional)", values.get("GITHUB_TOKEN", ""))
     default_cred = values.get("CLAUDE_CREDENTIALS_FILE") or find_claude_credentials()
     if default_cred:
-        values["CLAUDE_CREDENTIALS_FILE"] = ask_value("Claude credentials file", default_cred)
+        cred_value = ask_value("Claude credentials file", default_cred)
     else:
         click.echo("Claude credentials file: not detected")
-        values["CLAUDE_CREDENTIALS_FILE"] = ask_value("Claude credentials file", "")
+        cred_value = ask_value("Claude credentials file", "")
+    if cred_value:
+        values["CLAUDE_CREDENTIALS_FILE"] = str(Path(cred_value).expanduser())
     values["ENABLE_CC_ANALYSIS"] = "true" if click.confirm("Enable optional Claude Code analysis after dynamic execution?", default=False) else "false"
     if values["ENABLE_CC_ANALYSIS"] == "true":
         values["CC_MODEL"] = ask_value("Claude Code model", values.get("CC_MODEL", DEFAULTS["CC_MODEL"]))
@@ -580,7 +630,8 @@ def print_status(env_file: Path) -> None:
     click.echo(f"Node major: {env.get('NODE_MAJOR', '')} (Node.js LTS for Claude Code CLI)")
     click.echo(f"NOVA profile: {env.get('NOVA_PROFILE', '')}")
     cred = env.get("CLAUDE_CREDENTIALS_FILE", "")
-    cred_status = "exists" if cred and Path(cred).exists() else "missing"
+    cred_path = expand_path(cred)
+    cred_status = "exists" if cred_path and cred_path.exists() else "missing"
     click.echo(f"Claude credentials: {mask_path(cred)} ({cred_status})")
     click.echo(f"SkillsMP key: {mask_value(env.get('SKILLSMP_API_KEY'))}")
     if env.get("GITHUB_TOKEN"):
@@ -639,12 +690,17 @@ def doctor(ctx: click.Context) -> None:
     print_check("SKILLSMP_API_KEY", bool(skillsmp), "required for default crawl path")
 
     cred_value = env.get("CLAUDE_CREDENTIALS_FILE", "")
-    cred = Path(cred_value) if cred_value else None
+    cred = expand_path(cred_value)
     print_check("Claude credentials", bool(cred and cred.exists()), mask_path(cred_value))
 
+    docker = docker_cmd(env)
+    docker_cli = command_exists(docker[0])
+    print_check("Docker command", docker_cli, " ".join(docker))
+    print_check("Docker daemon access", docker_cli and docker_access_ok(docker), docker_access_detail(docker) if docker_cli else f"{docker[0]} command not found")
+
     image = env.get("DOCKER_IMAGE", "claude-skill-sandbox")
-    docker_ok = command_exists("docker") and subprocess.call(
-        ["docker", "image", "inspect", image],
+    docker_ok = docker_cli and docker_access_ok(docker) and subprocess.call(
+        docker + ["image", "inspect", image],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     ) == 0
@@ -702,13 +758,21 @@ def status(ctx: click.Context) -> None:
 def build(ctx: click.Context, mode: str | None, verbose: bool) -> None:
     """Build the Docker sandbox image."""
     env = merged_env(ctx.obj["env_file"])
+    docker = docker_cmd(env)
+    if not command_exists(docker[0]):
+        raise click.ClickException(f"{docker[0]} is not installed or not on PATH.")
+    if not docker_access_ok(docker):
+        raise click.ClickException(
+            "Docker is installed but this Docker command cannot access the daemon. "
+            "Add the user to the docker group and start a new login shell, run helper with sudo, or set DOCKER_CMD='sudo docker'."
+        )
     mode = mode or click.prompt(
         "Image mode",
         type=click.Choice(["none", "lite", "full-cpu", "full-custom"]),
         default="lite",
     )
     image = env.get("DOCKER_IMAGE", "claude-skill-sandbox")
-    args = ["docker", "build", "-t", image, "-f", "Dockerfile", "--build-arg", f"NODE_MAJOR={env.get('NODE_MAJOR', '22')}"]
+    args = docker + ["build", "-t", image, "-f", "Dockerfile", "--build-arg", f"NODE_MAJOR={env.get('NODE_MAJOR', '22')}"]
     if mode == "none":
         args += ["--build-arg", "NOVA_MODE=none"]
     elif mode == "lite":
@@ -741,7 +805,8 @@ def run_experiment(ctx: click.Context, analyze: bool | None, quiet: bool | None)
         env["EXEC_QUIET"] = "true" if quiet else "false"
     if not env.get("SKILLSMP_API_KEY"):
         raise click.ClickException("SKILLSMP_API_KEY is required. Run: python3 helper.py init")
-    if not env.get("CLAUDE_CREDENTIALS_FILE") or not Path(env["CLAUDE_CREDENTIALS_FILE"]).exists():
+    cred = expand_path(env.get("CLAUDE_CREDENTIALS_FILE", ""))
+    if not cred or not cred.exists():
         raise click.ClickException("Claude login was not found. Run Claude Code locally or set CLAUDE_CREDENTIALS_FILE.")
 
     print_banner()
@@ -803,7 +868,8 @@ def exec_queue(ctx: click.Context, queue_file: Path, workers: int | None, dry_ru
         click.echo(click.style("Dry run only; Docker was not started.", fg="yellow"))
         return
 
-    if not env.get("CLAUDE_CREDENTIALS_FILE") or not Path(env["CLAUDE_CREDENTIALS_FILE"]).exists():
+    cred = expand_path(env.get("CLAUDE_CREDENTIALS_FILE", ""))
+    if not cred or not cred.exists():
         raise click.ClickException("Claude login was not found. Run Claude Code locally or set CLAUDE_CREDENTIALS_FILE.")
 
     exec_workers = workers or int(env.get("EXEC_WORKERS", "1"))
