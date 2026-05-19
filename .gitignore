@@ -1,0 +1,14 @@
+__pycache__/
+*.py[cod]
+AGENTS.md
+
+code/.venv/
+code/.env
+code/data/
+code/execution_logs/
+code/logs/
+code/docker-images/
+code/workspace/
+code/scan_results/
+code/tasks/
+code/api_keys.conf

@@ -1,93 +1,65 @@
 # Docker Build Guide
 
-This guide explains how to build the Claude Skill Sandbox Docker image with different NOVA configurations.
-
-## Build Modes
-
-| Mode | Description | Size | ML Dependencies |
-|------|-------------|------|-----------------|
-| `none` (default) | Basic monitoring only (strace, tcpdump) | ~500MB | None |
-| `lite` | Pattern-based hooks without ML | ~520MB | None |
-| `full` | Full semantic analysis with NOVA | ~2.5GB | torch, transformers, sentence-transformers |
-
-## Quick Start
+Build from the `code/` directory:
 
 ```bash
-# Default build (no NOVA)
-docker build -t claude-skill-sandbox .
-
-# With NOVA Lite
-docker build --build-arg NOVA_MODE=lite -t claude-skill-sandbox .
-
-# With NOVA Full
-docker build --build-arg NOVA_MODE=full -t claude-skill-sandbox .
+docker build --build-arg NOVA_MODE=lite -t claude-skill-sandbox -f Dockerfile .
 ```
 
-## Using Local Python Packages (Optional)
+The image uses Node.js 22 by default for Claude Code CLI. Override it with
+`--build-arg NODE_MAJOR=<major>` if needed.
 
-If you have pre-built Python packages (e.g., from `python-packages/` directory), you can use them instead of downloading from PyPI:
+When using `python3 helper.py build --mode lite`, the helper prints concise
+progress and saves the complete Docker log under `logs/`. Add `--verbose` to
+stream all Docker output.
+
+## Modes
+
+| Mode | Purpose |
+|------|---------|
+| `none` | Claude Code sandbox with strace/tcpdump only |
+| `lite` | Adds vendored Nova-tracer recording and HTML reports |
+| `full` | Docker build argument that adds `nova-hunting` scanner dependencies |
+
+`lite` is the default recommendation for small-batch reproduction. `full` is
+only needed when running Nova-tracer keyword/semantic scanning inside the
+sandbox. In `helper.py build`, use `full-cpu` for the portable CPU build or
+`full-custom` to provide GPU/custom torch arguments.
+
+Helper build modes map to Docker build arguments as follows:
+
+| Helper mode | Docker build args |
+|-------------|-------------------|
+| `none` | `NOVA_MODE=none` |
+| `lite` | `NOVA_MODE=lite` |
+| `full-cpu` | `NOVA_MODE=full` with default CPU torch |
+| `full-custom` | `NOVA_MODE=full` with custom torch args |
+
+## Full Mode Torch Selection
+
+CPU torch is the default for portability:
 
 ```bash
-# Copy your nova package to the build context
-cp -r /path/to/python-packages/nova ./executor/nova-package/
-
-# Then build with NOVA Full (it will use local package if available)
-docker build --build-arg NOVA_MODE=full -t claude-skill-sandbox .
+docker build \
+  --build-arg NOVA_MODE=full \
+  --build-arg NOVA_TORCH_SPEC='torch>=2.5,<3' \
+  --build-arg NOVA_TORCH_INDEX_URL='https://download.pytorch.org/whl/cpu' \
+  -t claude-skill-sandbox:full .
 ```
 
-To use local packages, uncomment and modify this line in Dockerfile:
-```dockerfile
-COPY executor/nova-package/ /opt/nova-protector/nova/
-```
-
-## NOVA Modes Explained
-
-### NOVA_MODE=none
-- No NOVA hooks installed
-- Monitoring via strace/tcpdump only
-- Fastest build, smallest image
-- Suitable for basic dynamic analysis
-
-### NOVA_MODE=lite
-- Installs NOVA hook scripts
-- Pattern-based detection (keyword matching)
-- No ML dependencies required
-- Good for detecting obvious malicious patterns
-
-### NOVA_MODE=full
-- Installs complete NOVA framework
-- Includes ML models for semantic analysis
-- Can detect obfuscated/hidden malicious prompts
-- Requires ~2GB additional space
-- Longer build time (ML dependencies)
-
-## Troubleshooting
-
-### Build fails with "executor/nova-hooks not found"
-Make sure you're building from the `code/` directory:
-```bash
-cd MaliciousAgentSkillsBench/code
-docker build -t claude-skill-sandbox .
-```
-
-### NOVA Full build takes too long
-The ML dependencies (torch, transformers) are large. Consider using:
-- A pre-built image: `docker pull ghcr.io/your-org/claude-skill-sandbox:full`
-- NOVA Lite mode for faster iteration
-- Build cache: Docker will cache layers, subsequent builds are faster
-
-### Running out of space during NOVA Full build
-Increase Docker daemon storage limit or use NOVA Lite mode instead.
-
-## Verification
-
-Check installed NOVA mode:
+For GPU or custom environments, override the torch build args:
 
 ```bash
-docker run --rm claude-skill-sandbox cat /opt/nova-protector/nova_mode 2>/dev/null || echo "NOVA not installed"
+docker build \
+  --build-arg NOVA_MODE=full \
+  --build-arg NOVA_TORCH_INDEX_URL= \
+  --build-arg NOVA_TORCH_SPEC='torch>=2.5,<3' \
+  -t claude-skill-sandbox:full-gpu .
 ```
 
-Expected output:
-- `none` - NOVA not installed
-- `lite` - Pattern-based hooks only
-- `full` - Full NOVA with ML dependencies
+## Verify
+
+```bash
+docker run --rm claude-skill-sandbox \
+  sh -c 'cat /opt/nova-tracer/nova_mode 2>/dev/null || echo none'
+```

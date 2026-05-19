@@ -1,0 +1,14 @@
+.venv/
+.env
+.env.*
+execution_logs/
+logs/
+workspace/
+scan_results/
+tasks/
+data/
+api_keys.conf
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/

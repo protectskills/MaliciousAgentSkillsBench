@@ -1,7 +1,7 @@
 #!/bin/bash
 #
 # CC (Claude Code) Security Analyzer v1.0
-# Performs detailed security analysis on skills using Claude Code API
+# Performs optional LLM-assisted triage using the local Claude Code CLI.
 #
 
 set -e
@@ -10,6 +10,7 @@ set -e
 OUTPUT_SUFFIX="_audit.json"
 JOBS=${CC_JOBS:-10}
 MAX_RETRIES=${CC_MAX_RETRIES:-3}
+CC_MODEL=${CC_MODEL:-claude-sonnet-4-6}
 
 # Colors for output
 export GREEN='\033[0;32m'
@@ -42,7 +43,10 @@ INDEX_FILE="$OUTPUT_DIR/index.cache"
 TODO_FILE="$OUTPUT_DIR/todo.cache"
 SKIPPED_LOG="$OUTPUT_DIR/logs/skipped.log"
 
-# API Key configuration
+# API Key configuration.
+# LEGACY: api_keys.conf is the older multi-key rotation path retained for
+# backward compatibility. The recommended setup uses the local Claude Code
+# login (see helper.py init); leave api_keys.conf absent for that flow.
 API_KEY_CONF="$PROJECT_ROOT/api_keys.conf"
 KEY_INDEX_FILE="/tmp/cc_api_key_index.txt"
 LOCK_FILE="/tmp/cc_api_key_index.lock"
@@ -86,6 +90,7 @@ analyze_single_skill() {
     local skill_dir="$1"
     local repo_id="$2"
     local skill_name="$3"
+    local risk_level="${4:-unknown}"
 
     local filename="${repo_id}_${skill_name}${OUTPUT_SUFFIX}"
     local tmp_out=$(mktemp)
@@ -106,13 +111,16 @@ analyze_single_skill() {
         export ANTHROPIC_AUTH_TOKEN="$current_api_key"
     fi
 
-    # Execute Claude Code analysis
+    # Execute Claude Code triage
+    set +e
     claude -p \
+        --model "$CC_MODEL" \
         --output-format json \
         --append-system-prompt "$custom_prompt" \
         "Analyze Skill Directory: ${skill_dir}" > "$tmp_out" 2>&1 < /dev/null
 
     local exit_code=$?
+    set -e
 
     if [ ! -s "$tmp_out" ]; then
         exit_code=1
@@ -168,6 +176,20 @@ except:
 
         # Validate and save
         if echo "$clean_json" | jq . >/dev/null 2>&1; then
+            clean_json=$(SKILL_PATH="$skill_dir" REPO_ID="$repo_id" SKILL_NAME="$skill_name" RISK_LEVEL="$risk_level" python3 -c "
+import json, os, sys
+
+data = json.load(sys.stdin)
+data.setdefault('metadata', {})
+data['metadata'].update({
+    'skill_path': os.environ['SKILL_PATH'],
+    'repo_id': os.environ['REPO_ID'],
+    'skill_name': os.environ['SKILL_NAME'],
+    'risk_level': os.environ['RISK_LEVEL'],
+})
+data.setdefault('skill_path', os.environ['SKILL_PATH'])
+print(json.dumps(data, indent=2))
+" <<< "$clean_json")
             local status=$(echo "$clean_json" | jq -r '.audit_summary.intent_alignment_status' | tr -d '[:space:]')
 
             if [ -z "$status" ] || [ "$status" == "null" ]; then
@@ -196,6 +218,7 @@ except:
 }
 
 export -f analyze_single_skill get_next_api_key
+export OUTPUT_DIR OUTPUT_SUFFIX PROJECT_ROOT API_KEY_CONF KEY_INDEX_FILE LOCK_FILE CC_MODEL
 
 # Main execution
 main() {
@@ -278,29 +301,33 @@ print(f'TODO count: {todo_count}')
     COUNT_ERR=0
     PROCESSED=0
 
-    cat "$TODO_FILE" | xargs -P "$JOBS" -I {} bash -c '
-        IFS="|" read -r skill_name skill_path prompt repo_id risk_level rest <<< "{}"
-        analyze_single_skill "$skill_path" "$repo_id" "$skill_name"
-    ' | while read -r line; do
+    while read -r line; do
         PROCESSED=$((PROCESSED + 1))
         IFS='|' read -r status repo skill verdict <<< "$line"
 
         if [ "$status" == "DONE" ]; then
             case "$verdict" in
-                "SAFE") ((COUNT_SAFE++)); log "[$PROCESSED/$TOTAL_TODO] ${BLUE}${repo}_${skill}${NC} -> ${GREEN}[SAFE]${NC}" ;;
-                "SUSPICIOUS") ((COUNT_SUSP++)); log "[$PROCESSED/$TOTAL_TODO] ${BLUE}${repo}_${skill}${NC} -> ${YELLOW}[SUSPICIOUS]${NC}" ;;
-                "MALICIOUS") ((COUNT_MAL++)); log "[$PROCESSED/$TOTAL_TODO] ${BLUE}${repo}_${skill}${NC} -> ${RED}[MALICIOUS]${NC}" ;;
-                *) ((COUNT_ERR++)); log "[$PROCESSED/$TOTAL_TODO] ${repo}_${skill} -> ${CYAN}[${verdict}]${NC}" ;;
+                "SAFE") ((++COUNT_SAFE)); log "[$PROCESSED/$TOTAL_TODO] ${BLUE}${repo}_${skill}${NC} -> ${GREEN}[SAFE]${NC}" ;;
+                "SUSPICIOUS") ((++COUNT_SUSP)); log "[$PROCESSED/$TOTAL_TODO] ${BLUE}${repo}_${skill}${NC} -> ${YELLOW}[SUSPICIOUS]${NC}" ;;
+                "MALICIOUS") ((++COUNT_MAL)); log "[$PROCESSED/$TOTAL_TODO] ${BLUE}${repo}_${skill}${NC} -> ${RED}[MALICIOUS]${NC}" ;;
+                *) ((++COUNT_ERR)); log "[$PROCESSED/$TOTAL_TODO] ${repo}_${skill} -> ${CYAN}[${verdict}]${NC}" ;;
             esac
         else
-            ((COUNT_ERR++))
+            ((++COUNT_ERR))
             log "[$PROCESSED/$TOTAL_TODO] ${RED}Failed: ${repo}_${skill}${NC}"
         fi
 
         if (( PROCESSED % 20 == 0 )); then
             log "${CYAN}Progress: SAFE=$COUNT_SAFE | SUSP=$COUNT_SUSP | MAL=$COUNT_MAL | ERR=$COUNT_ERR${NC}"
         fi
-    done
+    done < <(
+        while IFS= read -r queue_line; do
+            printf '%s\0' "$queue_line"
+        done < "$TODO_FILE" | xargs -0 -P "$JOBS" -n 1 bash -c '
+        IFS="|" read -r skill_name skill_path prompt repo_id risk_level rest <<< "$1"
+        analyze_single_skill "$skill_path" "$repo_id" "$skill_name" "$risk_level"
+    ' _
+    )
 
     log "======================================"
     log "Analysis Complete!"

@@ -1,25 +1,11 @@
-# NOVA Protector ML Dependencies
-# These packages are required for the NOVA prompt pattern matching framework
+# Real Nova-tracer scanner dependencies
 #
 # Installation options:
-# 1. Full NOVA (with ML):  docker build --build-arg NOVA_MODE=full -t claude-skill-sandbox .
-# 2. NOVA Lite (no ML):    docker build --build-arg NOVA_MODE=lite -t claude-skill-sandbox .
+# 1. Full NOVA:            docker build --build-arg NOVA_MODE=full -t claude-skill-sandbox:full .
+# 2. NOVA record-only:     docker build --build-arg NOVA_MODE=lite -t claude-skill-sandbox .
 # 3. No NOVA:              docker build --build-arg NOVA_MODE=none -t claude-skill-sandbox .
 
-# Core ML framework
-torch>=2.0.0
-
-# Transformers and NLP
-transformers>=4.30.0
-sentence-transformers>=2.2.0
-
-# Scientific computing (required by sentence-transformers)
-scipy>=1.10.0
-scikit-learn>=1.2.0
-
-# NOVA framework dependencies
-colorama>=0.4.6
-docstring-parser>=0.15
-
-# Optional: for faster inference
-# accelerate>=0.20.0
+# Provides the `nova` Python package imported by nova-tracer's
+# post-tool-nova-guard.py. Its transitive dependencies supply the keyword and
+# semantic scanner implementation.
+nova-hunting
