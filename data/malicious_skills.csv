@@ -1,158 +1,158 @@
-source,repo,skill_name,classification,Pattern
-skills.rest,rest_73,project-init,malicious,Context Leakage;Hidden Instructions;Data Exfiltration;Remote Code Execution
-skills.rest,rest_154,github-multi-repo,malicious,External Transmission;Remote Code Execution
-skills.rest,rest_167,github-workflow-automation,malicious,External Transmission;Unpinned Dependencies;Remote Code Execution
-skills.rest,rest_234,flow-nexus-platform,malicious,External Transmission;Network sniffing / Credential theft;Behavior Manipulation;Excessive Permissions
-skills.rest,rest_330,tailadmin-patterns,malicious,Remote Code Execution; Behavior Manipulation
-skills.rest,rest_342,using-superpowers,malicious,Instruction Override
-skills.rest,rest_416,developer-growth-analysis,malicious,Context Leakage; Data Exfiltration; Network sniffing / Credential theft
-skills.rest,rest_422,legacy_v1,malicious,External Transmission; Behavior Manipulation
-skills.rest,rest_658,vercel-deploy,malicious,External Transmission; Behavior Manipulation
-skills.rest,rest_889,privilege-escalation-methods,malicious,File System Scan; Privilege Escalation; Behavior Manipulation; Hardcoded Tokens
-skills.rest,rest_1049,platform-porter,malicious,Privilege Escalation; File System Scan; Behavior Manipulation
-skills.rest,rest_1169,sqlite-agent-amplification,malicious,External Transmission; Remote Code Execution; Behavior Manipulation
-skills.rest,rest_1575,Skills,malicious,File System Scan; Behavior Manipulation
-skills.rest,rest_1659,math-calculator,malicious,Code Obfuscation; Remote Code Execution; Behavior Manipulation
-skills.rest,rest_2154,notion-export,malicious,Hidden Instructions; File System Scan; Behavior Manipulation
-skills.rest,rest_2313,database,malicious,Hardcoded Tokens
-skills.rest,rest_2347,sacred-space-protocol,malicious,Instruction Override; Behavior Manipulation
-skills.rest,rest_2872,pptx,malicious,Hidden Instructions; Code Obfuscation; Context Leakage; Remote Code Execution
-skills.rest,rest_3016,test-strategy,malicious,Instruction Override; Behavior Manipulation
-skills.rest,rest_3018,e2e-validator,malicious,Instruction Override; Behavior Manipulation
-skills.rest,rest_3103,github-code-review,malicious,Context Leakage; Code Obfuscation; External Transmission; Privilege Escalation; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_86,oracle,malicious,External Transmission; Instruction Override; Remote Code Execution; Behavior Manipulation
-skillsmp.com,smp_170,acorns,malicious,Context Leakage; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,adobesign,malicious,Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,american-airlines,malicious,Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,amtrak,malicious,Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,apple-music,malicious,External Transmission; Context Leakage; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,apple-tv-plus,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,audible,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,autotrader,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,behance,malicious,Context Leakage; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,brilliant,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,care-com,malicious,Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,carfax,malicious,Hidden Instructions; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,caviar,malicious,Context Leakage; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,compass,malicious,Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,coursera,malicious,Instruction Override; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,crunchyroll,malicious,External Transmission; Code Obfuscation; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,digitalocean,malicious,External Transmission; Context Leakage; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,discord-nitro,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,docusign,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,expedia,malicious,Context Leakage; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,facebook,malicious,Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,favor,malicious,Excessive Permissions; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,fidelity,malicious,Hidden Instructions; External Transmission; Excessive Permissions; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,firebase,malicious,External Transmission; Behavior Manipulation; Hardcoded Tokens; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,freshsales,malicious,Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,funimation,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,geforce-now,malicious,Context Leakage; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,google-analytics,malicious,Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,google-news,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,grammarly,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,grubhub,malicious,External Transmission; Behavior Manipulation; File System Scan; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,hashnode,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,hemingway,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,heygen,malicious,Context Leakage; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,homeadvisor,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,humble-bundle,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,hungryroot,malicious,Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,indeed,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Hardcoded Tokens
-skillsmp.com,smp_170,invision,malicious,Context Leakage; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,itch-io,malicious,Context Leakage; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,kayak,malicious,Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,kindle,malicious,Instruction Override; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,labcorp,malicious,Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,lawpay,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,linkedin,malicious,Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,mdlive,malicious,Context Leakage; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,medium,malicious,Code Obfuscation; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,mercury,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,newegg,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,nextdoor,malicious,Context Leakage; Excessive Permissions; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,nike-run-club,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,offerpad,malicious,Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,outlook,malicious,Context Leakage; Instruction Override; Hidden Instructions; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,pandadoc,malicious,Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,pandora,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,peacock,malicious,Context Leakage; Hidden Instructions; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,philips-hue,malicious,Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,playstation,malicious,Code Obfuscation; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,policygenius,malicious,Hidden Instructions; External Transmission; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,progressive,malicious,Hidden Instructions; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,repairpal,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,reuters,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,roblox,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,rover,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,sephora,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,spotify,malicious,Hidden Instructions; Remote Code Execution; Behavior Manipulation
-skillsmp.com,smp_170,sprout-social,malicious,Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,statefarm,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,teladoc,malicious,Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,thumbtack,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,tidal,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,turo,malicious,Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,upstash,malicious,Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,vanguard,malicious,Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,vercel,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,vrbo,malicious,Remote Code Execution
-skillsmp.com,smp_170,walgreens,malicious,External Transmission; Code Obfuscation; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,webflow,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,wish,malicious,Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,yourmechanic,malicious,Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_170,zapier,malicious,Data Exfiltration; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,zappos,malicious,Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,zeplin,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,zoho-crm,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_170,zoom,malicious,External Transmission; Code Obfuscation; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_413,hooks-automation,malicious,External Transmission; Context Leakage; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_716,stealth-ghosting,malicious,File System Scan; External Transmission; Instruction Override; Behavior Manipulation
-skillsmp.com,smp_716,stealth-ops,malicious,File System Scan; Behavior Manipulation; Remote Code Execution
-skillsmp.com,smp_866,lark-agent-simple,malicious,Network sniffing / Credential theft
-skillsmp.com,smp_1139,bsa-brainstorm,malicious,Instruction Override
-skillsmp.com,smp_1160,hacs,malicious,External Transmission; File System Scan; Context Leakage; Remote Code Execution
-skillsmp.com,smp_1535,jetaasc-newsletter,malicious,Hidden Instructions; Code Obfuscation; Remote Code Execution; External Transmission
-skillsmp.com,smp_1710,web-build,malicious,Context Leakage; Behavior Manipulation; Network sniffing / Credential theft
-skillsmp.com,smp_1881,nanobanana-base,malicious,Network sniffing / Credential theft
-skillsmp.com,smp_2332,context7,malicious,Hidden Instructions; Code Obfuscation; Context Leakage
-skillsmp.com,smp_2343,gemini-image,malicious,External Transmission; Instruction Override; Network sniffing / Credential theft; Behavior Manipulation
-skillsmp.com,smp_2362,codex-chat,malicious,Privilege Escalation; Instruction Override; Behavior Manipulation
-skillsmp.com,smp_2362,codex-tools,malicious,Instruction Override; Behavior Manipulation
-skillsmp.com,smp_2362,terra-data,malicious,Network sniffing / Credential theft
-skillsmp.com,smp_2370,hive-mind-advanced,malicious,Context Leakage; External Transmission; Privilege Escalation; Behavior Manipulation; File System Scan; Remote Code Execution
-skillsmp.com,smp_2485,full_upload_injected_pptx_skill,malicious,External Transmission; Context Leakage; Behavior Manipulation
-skillsmp.com,smp_2485,url_injected_pptx_skill,malicious,Hidden Instructions; External Transmission; Context Leakage; Behavior Manipulation
-skillsmp.com,smp_2559,hello,malicious,Instruction Override; Behavior Manipulation
-skillsmp.com,smp_2663,ai-truthfulness-enforcer,malicious,Instruction Override; Behavior Manipulation
-skillsmp.com,smp_2670,weekly-plan,malicious,Network sniffing / Credential theft
-skillsmp.com,smp_2795,email,malicious,External Transmission; Behavior Manipulation; Hardcoded Tokens
-skillsmp.com,smp_3101,setup-claude-skills-for-web,malicious,Remote Code Execution; Behavior Manipulation
-skillsmp.com,smp_3588,browser-automation,malicious,Context Leakage; Code Obfuscation; External Transmission; Behavior Manipulation; Hardcoded Tokens; Remote Code Execution
-skillsmp.com,smp_3604,dexter,malicious,File System Scan; Remote Code Execution
-skillsmp.com,smp_3639,network-conftest-generator,malicious,External Transmission; Remote Code Execution
-skillsmp.com,smp_3764,analytics,malicious,External Transmission; Network sniffing / Credential theft
-skillsmp.com,smp_4367,page,malicious,External Transmission; Unpinned Dependencies; Remote Code Execution
-skillsmp.com,smp_4412,agentic-jujutsu,malicious,Unpinned Dependencies; External Transmission; Code Obfuscation; Data Exfiltration; Behavior Manipulation; File System Scan; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_4712,infra-tester,malicious,Remote Code Execution
-skillsmp.com,smp_4727,my-skill,malicious,Hidden Instructions; Code Obfuscation; Remote Code Execution; Behavior Manipulation
-skillsmp.com,smp_4729,ccw-maven-setup,malicious,Unpinned Dependencies; Privilege Escalation; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_4914,graphics-api,malicious,Instruction Override
-skillsmp.com,smp_4977,runpod-ops,malicious,Unpinned Dependencies; Remote Code Execution; Network sniffing / Credential theft
-skillsmp.com,smp_6028,slack-bridge,malicious,Instruction Override; Remote Code Execution; Behavior Manipulation
-skillsmp.com,smp_6344,chrome-devtools,malicious,Code Obfuscation; Hardcoded Tokens
-skillsmp.com,smp_7251,flow-nexus-neural,malicious,Context Leakage; Instruction Override; External Transmission; Behavior Manipulation; Remote Code Execution
-skillsmp.com,smp_7332,idea-skill,malicious,Instruction Override; Hardcoded Tokens
-skillsmp.com,smp_7676,oh-notes,malicious,Data Exfiltration; Instruction Override
-skillsmp.com,smp_7843,updating-neon-logos,malicious,Remote Code Execution
-skillsmp.com,smp_7974,load-skills,malicious,External Transmission; Instruction Override; Remote Code Execution; Behavior Manipulation
-skillsmp.com,smp_8313,twitter_poster,malicious,Network sniffing / Credential theft
-skillsmp.com,smp_8380,cc10x-router,malicious,Instruction Override; Behavior Manipulation
-skillsmp.com,smp_8452,flow-nexus-platform,malicious,Context Leakage; External Transmission; Behavior Manipulation; File System Scan; Remote Code Execution
-skillsmp.com,smp_8593,worker,malicious,External Transmission; Instruction Override; Remote Code Execution
-skillsmp.com,smp_8691,doc-scraper,malicious,Hidden Instructions; Code Obfuscation; Remote Code Execution; Behavior Manipulation
-skillsmp.com,smp_9014,plan-refine,malicious,Network sniffing / Credential theft
-skillsmp.com,smp_9021,find-incomplete-series,malicious,External Transmission; Network sniffing / Credential theft; Hardcoded Tokens
-skillsmp.com,smp_9124,image-generator,malicious,Instruction Override; Network sniffing / Credential theft; Hardcoded Tokens
-skillsmp.com,smp_9692,yaml-workflow-executor,malicious,Remote Code Execution
-skillsmp.com,smp_10280,flow-nexus-swarm,malicious,External Transmission; Context Leakage; Remote Code Execution; Behavior Manipulation
+source,repo,skill_name,classification,Pattern,Severity
+skills.rest,rest_73,project-init,malicious,Context Leakage; Hidden Instructions; Data Exfiltration; Remote Code Execution,HIGH; HIGH; HIGH; CRITICAL
+skills.rest,rest_154,github-multi-repo,malicious,External Transmission; Remote Code Execution,HIGH; HIGH
+skills.rest,rest_167,github-workflow-automation,malicious,External Transmission; Command Injection; Remote Code Execution,HIGH; MEDIUM; CRITICAL
+skills.rest,rest_234,flow-nexus-platform,malicious,External Transmission; Network sniffing / Credential theft; Behavior Manipulation; Excessive Permissions,HIGH; CRITICAL; MEDIUM; HIGH
+skills.rest,rest_330,tailadmin-patterns,malicious,Remote Code Execution; Behavior Manipulation,CRITICAL; HIGH
+skills.rest,rest_342,using-superpowers,malicious,Instruction Override; Instruction Override; Instruction Override; Instruction Override,CRITICAL; HIGH; MEDIUM; MEDIUM
+skills.rest,rest_416,developer-growth-analysis,malicious,Context Leakage; Data Exfiltration; Network sniffing / Credential theft,CRITICAL; CRITICAL; CRITICAL
+skills.rest,rest_422,legacy_v1,malicious,External Transmission; Behavior Manipulation; Behavior Manipulation,MEDIUM; CRITICAL; MEDIUM
+skills.rest,rest_658,vercel-deploy,malicious,External Transmission; Behavior Manipulation,CRITICAL; HIGH
+skills.rest,rest_889,privilege-escalation-methods,malicious,File System Scan; Privilege Escalation; Privilege Escalation; Privilege Escalation; Privilege Escalation; Privilege Escalation; Privilege Escalation; Privilege Escalation; Behavior Manipulation; Hardcoded Tokens; Hardcoded Tokens; Hardcoded Tokens; Hardcoded Tokens,MEDIUM; HIGH; HIGH; HIGH; MEDIUM; MEDIUM; MEDIUM; MEDIUM; HIGH; HIGH; HIGH; HIGH; HIGH
+skills.rest,rest_1049,platform-porter,malicious,Privilege Escalation; File System Scan; Behavior Manipulation,MEDIUM; MEDIUM; MEDIUM
+skills.rest,rest_1169,sqlite-agent-amplification,malicious,External Transmission; Remote Code Execution; Behavior Manipulation,HIGH; CRITICAL; CRITICAL
+skills.rest,rest_1575,Skills,malicious,File System Scan; Behavior Manipulation,HIGH; MEDIUM
+skills.rest,rest_1659,math-calculator,malicious,Code Obfuscation; Remote Code Execution; Remote Code Execution; Behavior Manipulation,CRITICAL; CRITICAL; HIGH; HIGH
+skills.rest,rest_2154,notion-export,malicious,Hidden Instructions; File System Scan; Behavior Manipulation,CRITICAL; MEDIUM; HIGH
+skills.rest,rest_2313,database,malicious,Hardcoded Tokens,CRITICAL
+skills.rest,rest_2347,sacred-space-protocol,malicious,Instruction Override; Behavior Manipulation,CRITICAL; MEDIUM
+skills.rest,rest_2872,pptx,malicious,Hidden Instructions; Code Obfuscation; Context Leakage; Remote Code Execution,CRITICAL; CRITICAL; CRITICAL; CRITICAL
+skills.rest,rest_3016,test-strategy,malicious,Instruction Override; Behavior Manipulation,CRITICAL; HIGH
+skills.rest,rest_3018,e2e-validator,malicious,Instruction Override; Behavior Manipulation,CRITICAL; HIGH
+skills.rest,rest_3103,github-code-review,malicious,Context Leakage; Code Obfuscation; External Transmission; Privilege Escalation; Remote Code Execution; Network sniffing / Credential theft,HIGH; CRITICAL; HIGH; MEDIUM; CRITICAL; CRITICAL
+skillsmp.com,smp_86,oracle,malicious,External Transmission; Instruction Override; Remote Code Execution; Remote Code Execution; Behavior Manipulation,HIGH; CRITICAL; CRITICAL; CRITICAL; HIGH
+skillsmp.com,smp_170,acorns,malicious,Context Leakage; Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft,MEDIUM; CRITICAL; HIGH; HIGH
+skillsmp.com,smp_170,adobesign,malicious,Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,CRITICAL; HIGH; HIGH; MEDIUM
+skillsmp.com,smp_170,american-airlines,malicious,Remote Code Execution; Network sniffing / Credential theft; Network sniffing / Credential theft; Behavior Manipulation,CRITICAL; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,amtrak,malicious,Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation; Behavior Manipulation,CRITICAL; HIGH; HIGH; MEDIUM; MEDIUM
+skillsmp.com,smp_170,apple-music,malicious,External Transmission; Context Leakage; Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft,HIGH; HIGH; CRITICAL; CRITICAL; CRITICAL
+skillsmp.com,smp_170,apple-tv-plus,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,HIGH; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,audible,malicious,External Transmission; Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,HIGH; CRITICAL; HIGH; HIGH; MEDIUM
+skillsmp.com,smp_170,autotrader,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,HIGH; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,behance,malicious,Context Leakage; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft,HIGH; HIGH; MEDIUM; CRITICAL; CRITICAL
+skillsmp.com,smp_170,brilliant,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,MEDIUM; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,care-com,malicious,Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,CRITICAL; MEDIUM; HIGH; MEDIUM
+skillsmp.com,smp_170,carfax,malicious,Hidden Instructions; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft,MEDIUM; MEDIUM; HIGH; CRITICAL; HIGH
+skillsmp.com,smp_170,caviar,malicious,Context Leakage; External Transmission; Behavior Manipulation; Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft,MEDIUM; MEDIUM; MEDIUM; CRITICAL; CRITICAL; CRITICAL
+skillsmp.com,smp_170,compass,malicious,Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation; Behavior Manipulation,CRITICAL; HIGH; HIGH; CRITICAL; MEDIUM
+skillsmp.com,smp_170,coursera,malicious,Instruction Override; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,CRITICAL; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,crunchyroll,malicious,External Transmission; Code Obfuscation; Remote Code Execution; Network sniffing / Credential theft,HIGH; MEDIUM; CRITICAL; CRITICAL
+skillsmp.com,smp_170,digitalocean,malicious,External Transmission; External Transmission; Context Leakage; Remote Code Execution; Network sniffing / Credential theft,HIGH; HIGH; MEDIUM; CRITICAL; MEDIUM
+skillsmp.com,smp_170,discord-nitro,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation; Behavior Manipulation; Behavior Manipulation,HIGH; CRITICAL; CRITICAL; HIGH; HIGH; MEDIUM
+skillsmp.com,smp_170,docusign,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft,MEDIUM; CRITICAL; MEDIUM
+skillsmp.com,smp_170,expedia,malicious,Context Leakage; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft,MEDIUM; HIGH; MEDIUM; CRITICAL; HIGH
+skillsmp.com,smp_170,facebook,malicious,Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation; Behavior Manipulation,CRITICAL; MEDIUM; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,favor,malicious,Excessive Permissions; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft,LOW; MEDIUM; MEDIUM; CRITICAL; HIGH
+skillsmp.com,smp_170,fidelity,malicious,Hidden Instructions; External Transmission; Excessive Permissions; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft,HIGH; HIGH; MEDIUM; MEDIUM; CRITICAL; HIGH
+skillsmp.com,smp_170,firebase,malicious,External Transmission; Behavior Manipulation; Hardcoded Tokens; Remote Code Execution; Network sniffing / Credential theft,MEDIUM; MEDIUM; HIGH; CRITICAL; CRITICAL
+skillsmp.com,smp_170,freshsales,malicious,Remote Code Execution; Network sniffing / Credential theft,CRITICAL; MEDIUM
+skillsmp.com,smp_170,funimation,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,MEDIUM; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,geforce-now,malicious,Context Leakage; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft,HIGH; HIGH; MEDIUM; CRITICAL; HIGH
+skillsmp.com,smp_170,google-analytics,malicious,Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,CRITICAL; HIGH; HIGH; MEDIUM
+skillsmp.com,smp_170,google-news,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Network sniffing / Credential theft; Behavior Manipulation,MEDIUM; CRITICAL; HIGH; HIGH; MEDIUM
+skillsmp.com,smp_170,grammarly,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft,MEDIUM; CRITICAL; HIGH
+skillsmp.com,smp_170,grubhub,malicious,External Transmission; Behavior Manipulation; File System Scan; Remote Code Execution; Network sniffing / Credential theft,MEDIUM; MEDIUM; MEDIUM; CRITICAL; HIGH
+skillsmp.com,smp_170,hashnode,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft,MEDIUM; CRITICAL; MEDIUM
+skillsmp.com,smp_170,hemingway,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft,HIGH; CRITICAL; HIGH
+skillsmp.com,smp_170,heygen,malicious,Context Leakage; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,MEDIUM; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,homeadvisor,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,MEDIUM; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,humble-bundle,malicious,External Transmission; External Transmission; Remote Code Execution; Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,HIGH; HIGH; CRITICAL; CRITICAL; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,hungryroot,malicious,Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation; Behavior Manipulation,CRITICAL; HIGH; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,indeed,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Hardcoded Tokens,HIGH; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,invision,malicious,Context Leakage; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft; Network sniffing / Credential theft,HIGH; HIGH; MEDIUM; CRITICAL; CRITICAL; CRITICAL
+skillsmp.com,smp_170,itch-io,malicious,Context Leakage; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,HIGH; CRITICAL; CRITICAL; MEDIUM
+skillsmp.com,smp_170,kayak,malicious,Remote Code Execution; Network sniffing / Credential theft; Network sniffing / Credential theft; Behavior Manipulation,CRITICAL; HIGH; HIGH; MEDIUM
+skillsmp.com,smp_170,kindle,malicious,Instruction Override; Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft,MEDIUM; CRITICAL; HIGH; CRITICAL
+skillsmp.com,smp_170,labcorp,malicious,Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,CRITICAL; HIGH; HIGH; MEDIUM
+skillsmp.com,smp_170,lawpay,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation; Behavior Manipulation; Behavior Manipulation,HIGH; CRITICAL; HIGH; HIGH; MEDIUM; MEDIUM
+skillsmp.com,smp_170,linkedin,malicious,Remote Code Execution; Network sniffing / Credential theft,CRITICAL; HIGH
+skillsmp.com,smp_170,mdlive,malicious,Context Leakage; Remote Code Execution; Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,MEDIUM; CRITICAL; CRITICAL; HIGH; HIGH; MEDIUM
+skillsmp.com,smp_170,medium,malicious,Code Obfuscation; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft,HIGH; MEDIUM; MEDIUM; CRITICAL; CRITICAL
+skillsmp.com,smp_170,mercury,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,HIGH; CRITICAL; CRITICAL; HIGH
+skillsmp.com,smp_170,newegg,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,HIGH; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,nextdoor,malicious,Context Leakage; Excessive Permissions; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft,MEDIUM; MEDIUM; HIGH; MEDIUM; CRITICAL; CRITICAL
+skillsmp.com,smp_170,nike-run-club,malicious,External Transmission; External Transmission; Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,HIGH; MEDIUM; CRITICAL; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,offerpad,malicious,Remote Code Execution; Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,CRITICAL; CRITICAL; MEDIUM; HIGH; MEDIUM
+skillsmp.com,smp_170,outlook,malicious,Context Leakage; Instruction Override; Hidden Instructions; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft,MEDIUM; MEDIUM; CRITICAL; MEDIUM; MEDIUM; CRITICAL; HIGH
+skillsmp.com,smp_170,pandadoc,malicious,Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,CRITICAL; HIGH; HIGH
+skillsmp.com,smp_170,pandora,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,MEDIUM; CRITICAL; CRITICAL; MEDIUM
+skillsmp.com,smp_170,peacock,malicious,Context Leakage; Hidden Instructions; External Transmission; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft,MEDIUM; MEDIUM; MEDIUM; MEDIUM; CRITICAL; HIGH
+skillsmp.com,smp_170,philips-hue,malicious,Remote Code Execution; Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,CRITICAL; HIGH; HIGH; CRITICAL; MEDIUM
+skillsmp.com,smp_170,playstation,malicious,Code Obfuscation; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,HIGH; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,policygenius,malicious,Hidden Instructions; External Transmission; Remote Code Execution; Network sniffing / Credential theft,MEDIUM; MEDIUM; CRITICAL; HIGH
+skillsmp.com,smp_170,progressive,malicious,Hidden Instructions; Hidden Instructions; Remote Code Execution; Network sniffing / Credential theft; Network sniffing / Credential theft,HIGH; MEDIUM; CRITICAL; CRITICAL; CRITICAL
+skillsmp.com,smp_170,repairpal,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,HIGH; CRITICAL; CRITICAL; MEDIUM
+skillsmp.com,smp_170,reuters,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,MEDIUM; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,roblox,malicious,External Transmission; Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft,MEDIUM; CRITICAL; CRITICAL; MEDIUM
+skillsmp.com,smp_170,rover,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Network sniffing / Credential theft,MEDIUM; CRITICAL; CRITICAL; HIGH
+skillsmp.com,smp_170,sephora,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,MEDIUM; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,spotify,malicious,Hidden Instructions; Remote Code Execution; Behavior Manipulation,MEDIUM; CRITICAL; MEDIUM
+skillsmp.com,smp_170,sprout-social,malicious,Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation; Behavior Manipulation,CRITICAL; HIGH; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,statefarm,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,HIGH; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,teladoc,malicious,Remote Code Execution; Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation; Behavior Manipulation,CRITICAL; HIGH; MEDIUM; HIGH; HIGH; MEDIUM
+skillsmp.com,smp_170,thumbtack,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft,MEDIUM; CRITICAL; MEDIUM
+skillsmp.com,smp_170,tidal,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,HIGH; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,turo,malicious,Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft,CRITICAL; CRITICAL; HIGH
+skillsmp.com,smp_170,upstash,malicious,Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft,CRITICAL; MEDIUM; MEDIUM
+skillsmp.com,smp_170,vanguard,malicious,Remote Code Execution; Network sniffing / Credential theft,CRITICAL; HIGH
+skillsmp.com,smp_170,vercel,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,MEDIUM; CRITICAL; HIGH; HIGH
+skillsmp.com,smp_170,vrbo,malicious,Remote Code Execution,CRITICAL
+skillsmp.com,smp_170,walgreens,malicious,External Transmission; Code Obfuscation; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft,MEDIUM; LOW; MEDIUM; CRITICAL; HIGH
+skillsmp.com,smp_170,webflow,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Network sniffing / Credential theft,HIGH; CRITICAL; CRITICAL; HIGH
+skillsmp.com,smp_170,wish,malicious,Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,CRITICAL; HIGH; CRITICAL; MEDIUM
+skillsmp.com,smp_170,yourmechanic,malicious,Remote Code Execution; Network sniffing / Credential theft,CRITICAL; MEDIUM
+skillsmp.com,smp_170,zapier,malicious,Data Exfiltration; Remote Code Execution; Network sniffing / Credential theft; Network sniffing / Credential theft; Behavior Manipulation,HIGH; CRITICAL; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,zappos,malicious,Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation; Behavior Manipulation,CRITICAL; HIGH; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,zeplin,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,MEDIUM; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,zoho-crm,malicious,External Transmission; Remote Code Execution; Network sniffing / Credential theft; Behavior Manipulation,MEDIUM; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_170,zoom,malicious,External Transmission; Code Obfuscation; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft,HIGH; MEDIUM; MEDIUM; CRITICAL; CRITICAL
+skillsmp.com,smp_413,hooks-automation,malicious,External Transmission; Context Leakage; Remote Code Execution; Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft,HIGH; CRITICAL; CRITICAL; CRITICAL; CRITICAL; CRITICAL
+skillsmp.com,smp_716,stealth-ghosting,malicious,File System Scan; External Transmission; Instruction Override; Behavior Manipulation,MEDIUM; HIGH; CRITICAL; MEDIUM
+skillsmp.com,smp_716,stealth-ops,malicious,File System Scan; Behavior Manipulation; Behavior Manipulation; Remote Code Execution,MEDIUM; MEDIUM; MEDIUM; CRITICAL
+skillsmp.com,smp_866,lark-agent-simple,malicious,Network sniffing / Credential theft; Network sniffing / Credential theft,CRITICAL; MEDIUM
+skillsmp.com,smp_1139,bsa-brainstorm,malicious,Instruction Override,CRITICAL
+skillsmp.com,smp_1160,hacs,malicious,External Transmission; External Transmission; File System Scan; File System Scan; Context Leakage; Remote Code Execution,HIGH; MEDIUM; HIGH; MEDIUM; HIGH; MEDIUM
+skillsmp.com,smp_1535,jetaasc-newsletter,malicious,Hidden Instructions; Code Obfuscation; Remote Code Execution; External Transmission,CRITICAL; CRITICAL; CRITICAL; HIGH
+skillsmp.com,smp_1710,web-build,malicious,Context Leakage; Behavior Manipulation; Network sniffing / Credential theft,CRITICAL; HIGH; CRITICAL
+skillsmp.com,smp_1881,nanobanana-base,malicious,Network sniffing / Credential theft; Network sniffing / Credential theft,CRITICAL; CRITICAL
+skillsmp.com,smp_2332,context7,malicious,Hidden Instructions; Code Obfuscation; Context Leakage,CRITICAL; CRITICAL; HIGH
+skillsmp.com,smp_2343,gemini-image,malicious,External Transmission; Instruction Override; Network sniffing / Credential theft; Behavior Manipulation,CRITICAL; CRITICAL; CRITICAL; MEDIUM
+skillsmp.com,smp_2362,codex-chat,malicious,Privilege Escalation; Instruction Override; Instruction Override; Behavior Manipulation,HIGH; CRITICAL; CRITICAL; HIGH
+skillsmp.com,smp_2362,codex-tools,malicious,Instruction Override; Behavior Manipulation,CRITICAL; HIGH
+skillsmp.com,smp_2362,terra-data,malicious,Network sniffing / Credential theft,CRITICAL
+skillsmp.com,smp_2370,hive-mind-advanced,malicious,Context Leakage; External Transmission; Privilege Escalation; Behavior Manipulation; Behavior Manipulation; Behavior Manipulation; File System Scan; Remote Code Execution; Remote Code Execution,CRITICAL; CRITICAL; MEDIUM; CRITICAL; CRITICAL; HIGH; HIGH; CRITICAL; CRITICAL
+skillsmp.com,smp_2485,full_upload_injected_pptx_skill,malicious,External Transmission; Context Leakage; Behavior Manipulation,CRITICAL; HIGH; HIGH
+skillsmp.com,smp_2485,url_injected_pptx_skill,malicious,Hidden Instructions; External Transmission; Context Leakage; Behavior Manipulation; Behavior Manipulation,CRITICAL; CRITICAL; CRITICAL; CRITICAL; HIGH
+skillsmp.com,smp_2559,hello,malicious,Instruction Override; Behavior Manipulation,CRITICAL; MEDIUM
+skillsmp.com,smp_2663,ai-truthfulness-enforcer,malicious,Instruction Override; Instruction Override; Instruction Override; Instruction Override; Instruction Override; Behavior Manipulation; Behavior Manipulation,CRITICAL; CRITICAL; CRITICAL; CRITICAL; CRITICAL; MEDIUM; MEDIUM
+skillsmp.com,smp_2670,weekly-plan,malicious,Network sniffing / Credential theft,CRITICAL
+skillsmp.com,smp_2795,email,malicious,External Transmission; External Transmission; Behavior Manipulation; Behavior Manipulation; Hardcoded Tokens,CRITICAL; HIGH; HIGH; MEDIUM; HIGH
+skillsmp.com,smp_3101,setup-claude-skills-for-web,malicious,Remote Code Execution; Behavior Manipulation,CRITICAL; MEDIUM
+skillsmp.com,smp_3588,browser-automation,malicious,Context Leakage; Code Obfuscation; External Transmission; Behavior Manipulation; Hardcoded Tokens; Remote Code Execution,HIGH; CRITICAL; CRITICAL; MEDIUM; CRITICAL; HIGH
+skillsmp.com,smp_3604,dexter,malicious,File System Scan; Remote Code Execution,MEDIUM; CRITICAL
+skillsmp.com,smp_3639,network-conftest-generator,malicious,External Transmission; Remote Code Execution,MEDIUM; MEDIUM
+skillsmp.com,smp_3764,analytics,malicious,External Transmission; Network sniffing / Credential theft,HIGH; CRITICAL
+skillsmp.com,smp_4367,page,malicious,External Transmission; Command Injection; Remote Code Execution,HIGH; MEDIUM; CRITICAL
+skillsmp.com,smp_4412,agentic-jujutsu,malicious,Command Injection; External Transmission; Code Obfuscation; Data Exfiltration; Behavior Manipulation; File System Scan; Remote Code Execution; Network sniffing / Credential theft,MEDIUM; HIGH; HIGH; HIGH; MEDIUM; MEDIUM; CRITICAL; CRITICAL
+skillsmp.com,smp_4712,infra-tester,malicious,Remote Code Execution,CRITICAL
+skillsmp.com,smp_4727,my-skill,malicious,Hidden Instructions; Code Obfuscation; Remote Code Execution; Behavior Manipulation,HIGH; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_4729,ccw-maven-setup,malicious,Command Injection; Privilege Escalation; Behavior Manipulation; Remote Code Execution; Network sniffing / Credential theft; Network sniffing / Credential theft,MEDIUM; HIGH; MEDIUM; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_4914,graphics-api,malicious,Instruction Override,CRITICAL
+skillsmp.com,smp_4977,runpod-ops,malicious,Command Injection; Remote Code Execution; Remote Code Execution; Network sniffing / Credential theft,MEDIUM; CRITICAL; HIGH; HIGH
+skillsmp.com,smp_6028,slack-bridge,malicious,Instruction Override; Instruction Override; Instruction Override; Remote Code Execution; Behavior Manipulation,CRITICAL; CRITICAL; CRITICAL; CRITICAL; MEDIUM
+skillsmp.com,smp_6344,chrome-devtools,malicious,Code Obfuscation; Hardcoded Tokens; Hardcoded Tokens; Hardcoded Tokens; Hardcoded Tokens; Hardcoded Tokens,CRITICAL; CRITICAL; CRITICAL; CRITICAL; CRITICAL; CRITICAL
+skillsmp.com,smp_7251,flow-nexus-neural,malicious,Context Leakage; Instruction Override; External Transmission; External Transmission; Behavior Manipulation; Remote Code Execution; Remote Code Execution; Remote Code Execution,HIGH; CRITICAL; CRITICAL; HIGH; HIGH; CRITICAL; CRITICAL; CRITICAL
+skillsmp.com,smp_7332,idea-skill,malicious,Instruction Override; Instruction Override; Hardcoded Tokens,HIGH; MEDIUM; CRITICAL
+skillsmp.com,smp_7676,oh-notes,malicious,Data Exfiltration; Instruction Override,CRITICAL; CRITICAL
+skillsmp.com,smp_7843,updating-neon-logos,malicious,Remote Code Execution; Remote Code Execution,CRITICAL; HIGH
+skillsmp.com,smp_7974,load-skills,malicious,External Transmission; Instruction Override; Remote Code Execution; Remote Code Execution; Behavior Manipulation,HIGH; CRITICAL; CRITICAL; CRITICAL; MEDIUM
+skillsmp.com,smp_8313,twitter_poster,malicious,Network sniffing / Credential theft,CRITICAL
+skillsmp.com,smp_8380,cc10x-router,malicious,Instruction Override; Instruction Override; Instruction Override; Instruction Override; Instruction Override; Behavior Manipulation,CRITICAL; CRITICAL; CRITICAL; CRITICAL; HIGH; MEDIUM
+skillsmp.com,smp_8452,flow-nexus-platform,malicious,Context Leakage; External Transmission; Behavior Manipulation; File System Scan; Remote Code Execution,HIGH; MEDIUM; HIGH; MEDIUM; CRITICAL
+skillsmp.com,smp_8593,worker,malicious,External Transmission; Instruction Override; Remote Code Execution,HIGH; CRITICAL; CRITICAL
+skillsmp.com,smp_8691,doc-scraper,malicious,Hidden Instructions; Code Obfuscation; Remote Code Execution; Remote Code Execution; Behavior Manipulation,HIGH; HIGH; CRITICAL; CRITICAL; HIGH
+skillsmp.com,smp_9014,plan-refine,malicious,Network sniffing / Credential theft,CRITICAL
+skillsmp.com,smp_9021,find-incomplete-series,malicious,External Transmission; Network sniffing / Credential theft; Hardcoded Tokens,HIGH; CRITICAL; MEDIUM
+skillsmp.com,smp_9124,image-generator,malicious,Instruction Override; Network sniffing / Credential theft; Hardcoded Tokens,HIGH; CRITICAL; CRITICAL
+skillsmp.com,smp_9692,yaml-workflow-executor,malicious,Remote Code Execution,CRITICAL
+skillsmp.com,smp_10280,flow-nexus-swarm,malicious,External Transmission; External Transmission; Context Leakage; Context Leakage; Remote Code Execution; Behavior Manipulation; Behavior Manipulation,HIGH; HIGH; CRITICAL; CRITICAL; CRITICAL; HIGH; HIGH
