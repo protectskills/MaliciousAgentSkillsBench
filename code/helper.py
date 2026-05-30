@@ -203,7 +203,7 @@ def ask_secret_value(label: str, current: str = "", required: bool = False) -> s
 def env_hints(env: Dict[str, str]) -> List[str]:
     hints = []
     if not env.get("SKILLSMP_API_KEY"):
-        hints.append("Run `python3 helper.py init` and set SKILLSMP_API_KEY for the default crawl path.")
+        hints.append("Set SKILLSMP_API_KEY for the default crawl path: generate a key at https://skillsmp.com (account settings), then run `python3 helper.py init`.")
     if not claude_auth_available(env):
         hints.append("Run Claude Code locally, set CLAUDE_CREDENTIALS_FILE, or set CLAUDE_SETTINGS_FILE with Claude env auth before dynamic execution.")
     docker = docker_cmd(env)
@@ -216,7 +216,7 @@ def env_hints(env: Dict[str, str]) -> List[str]:
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
     ) != 0:
-        hints.append("Run `python3 helper.py build --mode lite` to pull the default image, or set DOCKER_IMAGE to an existing image.")
+        hints.append("Run `python3 helper.py build --mode lite` to pull the default image (or `--mode load-tar` to import the sandbox-lite-v1 release tarball if the pull fails), or set DOCKER_IMAGE to an existing image.")
     return hints
 
 
@@ -649,6 +649,7 @@ def init(ctx: click.Context) -> None:
 
     print_banner()
     click.echo(f"Writing local env: {env_file}")
+    click.echo("SkillsMP API key: sign up or log in at https://skillsmp.com and generate it from your account settings.")
     values["SKILLSMP_API_KEY"] = ask_secret_value("SkillsMP API key", values.get("SKILLSMP_API_KEY", ""), required=True)
     values["GITHUB_TOKEN"] = ask_secret_value("GitHub token (optional)", values.get("GITHUB_TOKEN", ""))
     default_cred = values.get("CLAUDE_CREDENTIALS_FILE") or find_claude_credentials()
@@ -787,7 +788,7 @@ def doctor(ctx: click.Context) -> None:
         print_check(f"host {tool}", command_exists(tool), (shutil.which(tool) or "optional; Docker image provides runtime monitor"))
 
     skillsmp = env.get("SKILLSMP_API_KEY", "")
-    print_check("SKILLSMP_API_KEY", bool(skillsmp), "required for default crawl path")
+    print_check("SKILLSMP_API_KEY", bool(skillsmp), "required for default crawl path; get one at https://skillsmp.com")
 
     settings_value = env.get("CLAUDE_SETTINGS_FILE") or find_claude_settings()
     settings_env = load_claude_settings_env(settings_value)
@@ -942,7 +943,7 @@ def run_experiment(ctx: click.Context, analyze: bool | None, quiet: bool | None)
     if quiet is not None:
         env["EXEC_QUIET"] = "true" if quiet else "false"
     if not env.get("SKILLSMP_API_KEY"):
-        raise click.ClickException("SKILLSMP_API_KEY is required. Run: python3 helper.py init")
+        raise click.ClickException("SKILLSMP_API_KEY is required (generate one at https://skillsmp.com, account settings). Run: python3 helper.py init")
     if not claude_auth_available(env):
         raise click.ClickException("Claude login was not found. Run Claude Code locally, set CLAUDE_CREDENTIALS_FILE, or set CLAUDE_SETTINGS_FILE.")
     if is_enabled(env.get("EXEC_REPORT_MODE", "false")):

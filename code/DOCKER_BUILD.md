@@ -9,7 +9,9 @@ docker pull ghcr.io/protectskills/claude-skill-sandbox:lite
 If registry access is unreliable, download the release asset and load it:
 
 ```bash
-gh release download sandbox-lite-v1 --pattern 'claude-skill-sandbox-lite.tar.gz'
+gh release download sandbox-lite-v1 \
+    -R protectskills/MaliciousAgentSkillsBench \
+    --pattern 'claude-skill-sandbox-lite.tar.gz'
 docker load -i claude-skill-sandbox-lite.tar.gz
 ```
 

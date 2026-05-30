@@ -1,0 +1,6 @@
+# Dependencies for the RQ2 statistical analysis (co-occurrence + hypothesis tests).
+# Installed separately from the pipeline's requirements.txt because these are
+# only needed to re-derive the published figures/tables, not to run the funnel.
+numpy>=1.24
+scipy>=1.10           # fisher_exact, mannwhitneyu, contingency.odds_ratio
+matplotlib>=3.6       # co-occurrence heatmap

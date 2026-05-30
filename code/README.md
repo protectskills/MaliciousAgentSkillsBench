@@ -28,6 +28,13 @@ This project provides an end-to-end security scanning pipeline for Claude Code S
 
 ```
 code/                                 # This directory
+├── analysis/           # RQ2 statistics (taxonomy + co-occurrence + hypothesis tests)
+│   ├── taxonomy_counts.py   # Instance-level taxonomy counts (632)
+│   ├── cooccurrence.py      # Co-occurrence matrices + heatmap
+│   ├── hypothesis_tests.py  # Fisher / Bonferroni / Mann-Whitney severity
+│   ├── patterns.py          # Pattern taxonomy + name->code map
+│   ├── dataset.py           # Loader for malicious_skills.csv
+│   └── requirements.txt     # numpy, scipy, matplotlib
 ├── analyzer/           # Optional Claude Code triage module
 │   ├── cc_analyzer.sh
 │   └── prompts/         # Audit prompts
@@ -55,7 +62,9 @@ code/                                 # This directory
 │   ├── 05_gen_run_queue.sh
 │   ├── 06_execute.sh
 │   ├── 07_gen_cc_queue.sh
-│   └── 08_cc_analyze.sh
+│   ├── 08_cc_analyze.sh
+│   ├── 09_cooccurrence.sh
+│   └── 10_hypothesis.sh
 ├── tasks/              # Task queues (gitignored): run_queue.txt, cc_queue.txt,
 │                       #   run_queue_state.jsonl, local_skills_queue.txt
 ├── utils/              # Utility modules
@@ -92,7 +101,7 @@ code/                                 # This directory
 - Docker (required for sandboxed skill execution)
 
 **For default crawl path:**
-- SkillsMP API key
+- SkillsMP API key — sign up or log in at https://skillsmp.com and generate the key from your account settings (sent as a Bearer token to the SkillsMP search API)
 
 ### Setup
 
@@ -149,6 +158,7 @@ dynamic evidence remains the important artifact.
 The underlying scripts can also be run manually:
 
 ```bash
+# Get SKILLSMP_API_KEY from your account settings at https://skillsmp.com
 export SKILLSMP_API_KEY=your_skillsmp_api_key_here
 export SKIP_REST_CRAWL=true
 export SKILLSMP_SEARCH_CHARS=a
@@ -355,7 +365,7 @@ tune crawler, scanner, analyzer, or executor internals.
 | Variable | Description |
 |----------|-------------|
 | `GITHUB_TOKEN` | GitHub token for repository access |
-| `SKILLSMP_API_KEY` | SkillsMP API key for the default crawl path |
+| `SKILLSMP_API_KEY` | SkillsMP API key for the default crawl path; generate one in your account settings at https://skillsmp.com (sent as `Authorization: Bearer`) |
 | `CLAUDE_CREDENTIALS_FILE`, `CLAUDE_SETTINGS_FILE` | Local Claude Code credentials file, or settings file with Anthropic-compatible env auth |
 | `CC_MODEL`, `CC_JOBS` | Claude Code model and parallel job count for optional triage |
 | `CC_RISK_LEVELS` | Static-scan risk buckets sent to CC triage (default `low medium high critical safe`) |

@@ -13,6 +13,7 @@ You must strictly check for the following specific vulnerability patterns define
 * **[E2] Env Variable Harvesting**: Code logic that collects API keys/secrets from `os.environ` or `.env` files.
 * **[E4] Context Leakage**: Transmitting agent conversation history or user prompts to external services.
 * **[PE3] Credential Access**: Reading known auth token files (e.g., `.aws/credentials`, `id_rsa`) or password stores.
+* **[SC1] Command Injection**: Executing arbitrary system commands from unsanitized input (e.g. `os.system` / `subprocess(..., shell=True)` with user-controlled data).
 * **[SC2] External Script Fetching**: `curl/wget | bash` or dynamic `import` from remote URLs at runtime.
 * **[SC3] Obfuscated Code**: Base64 strings, packed code, or intentionally obscure logic hiding malicious behavior.
 * **[Reverse Shell]**: Any logic establishing reverse connections (socket connect + dup2).
@@ -25,7 +26,6 @@ You must strictly check for the following specific vulnerability patterns define
 
 **LOW SEVERITY / NOISE (DO NOT REPORT unless part of a kill-chain):**
 * **[PE1] Excessive Permissions**: Requesting broad scopes (unless it enables a High severity attack).
-* **[SC1] Unpinned Dependencies**: Loose version constraints in `requirements.txt`/`package.json`.
 * **CLI Arguments**: Vulnerabilities strictly limited to local CLI interactions with no network/remote attack vector.
 
 ## 2. Methodology: Intent Alignment & Consistency
