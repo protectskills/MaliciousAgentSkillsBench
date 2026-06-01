@@ -28,13 +28,18 @@ This project provides an end-to-end security scanning pipeline for Claude Code S
 
 ```
 code/                                 # This directory
-├── analysis/           # RQ2 statistics (taxonomy + co-occurrence + hypothesis tests)
+├── analysis/           # RQ1/RQ2 statistics (landscape + taxonomy + co-occurrence + hypothesis tests)
+│   ├── dataset_funnel.py    # Per-source funnel table (snapshot CSV)
 │   ├── taxonomy_counts.py   # Instance-level taxonomy counts (632)
+│   ├── rq1_landscape.py     # RQ1 landscape: density, severity, phase coverage
+│   ├── phase_cooccurrence.py # Kill chain phase co-occurrence matrix
 │   ├── cooccurrence.py      # Co-occurrence matrices + heatmap
+│   ├── archetypes.py        # Archetypes, enrichment, smp_170 fingerprint
+│   ├── network_analysis.py  # Co-occurrence network: degree, betweenness, communities
 │   ├── hypothesis_tests.py  # Fisher / Bonferroni / Mann-Whitney severity
 │   ├── patterns.py          # Pattern taxonomy + name->code map
 │   ├── dataset.py           # Loader for malicious_skills.csv
-│   └── requirements.txt     # numpy, scipy, matplotlib
+│   └── requirements.txt     # numpy, scipy, matplotlib, networkx
 ├── analyzer/           # Optional Claude Code triage module
 │   ├── cc_analyzer.sh
 │   └── prompts/         # Audit prompts
@@ -64,7 +69,12 @@ code/                                 # This directory
 │   ├── 07_gen_cc_queue.sh
 │   ├── 08_cc_analyze.sh
 │   ├── 09_cooccurrence.sh
-│   └── 10_hypothesis.sh
+│   ├── 10_hypothesis.sh
+│   ├── 11_rq1.sh
+│   ├── 12_phase.sh
+│   ├── 13_archetypes.sh
+│   ├── 14_network.sh
+│   └── 15_funnel.sh
 ├── tasks/              # Task queues (gitignored): run_queue.txt, cc_queue.txt,
 │                       #   run_queue_state.jsonl, local_skills_queue.txt
 ├── utils/              # Utility modules

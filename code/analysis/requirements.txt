@@ -1,6 +1,8 @@
-# Dependencies for the RQ2 statistical analysis (co-occurrence + hypothesis tests).
+# Dependencies for the RQ1/RQ2 statistical analysis (taxonomy + landscape +
+# co-occurrence + hypothesis tests + network structure).
 # Installed separately from the pipeline's requirements.txt because these are
 # only needed to re-derive the published figures/tables, not to run the funnel.
 numpy>=1.24
 scipy>=1.10           # fisher_exact, mannwhitneyu, contingency.odds_ratio
 matplotlib>=3.6       # co-occurrence heatmap
+networkx>=3.0         # co-occurrence network: weighted degree, betweenness, Louvain

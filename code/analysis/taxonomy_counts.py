@@ -1,25 +1,5 @@
 #!/usr/bin/env python3
-"""Instance-level attack-technique taxonomy counts (paper Table
-"Attack technique taxonomy", 632 labeled vulnerabilities).
-
-The released ``data/malicious_skills.csv`` keeps repeated pattern tokens: a
-single confirmed-malicious skill can list the same pattern more than once, one
-token per labeled vulnerability *instance* (e.g. several Remote-Script-Execution
-call-sites in different files). Summing every token -- WITHOUT deduplicating --
-reproduces the paper's 632 instance-level taxonomy counts.
-
-This is the deliberate OPPOSITE granularity from ``cooccurrence.py`` and
-``hypothesis_tests.py``, which collapse each skill's patterns to a set
-(skill-level) because the co-occurrence matrix and the Fisher / severity
-analyses ask "how many *skills* exhibit pattern X (and Y)". One data file, two
-granularities:
-
-* ``taxonomy_counts.py``  -> do NOT dedupe -> 632 instances (this script)
-* ``cooccurrence.py``     -> dedupe (set)  -> per-skill co-occurrence (SC2=118,...)
-* ``hypothesis_tests.py`` -> dedupe (set)  -> Fisher / Mann-Whitney severity
-
-So the SAME pattern can sum to 159 here (instances) but 118 in the co-occurrence
-diagonal (skills) -- both are correct and both appear in the paper.
+"""Generate instance-level attack-technique taxonomy counts.
 
 Usage:
     python3 taxonomy_counts.py
@@ -35,12 +15,11 @@ from pathlib import Path
 
 from patterns import PHASE_ORDER, TAXONOMY, normalize_pattern
 
-# code/analysis/taxonomy_counts.py -> ../../data/malicious_skills.csv
 DEFAULT_CSV = Path(__file__).resolve().parents[2] / "data" / "malicious_skills.csv"
 
 
 def load_counts(csv_path: Path | str = DEFAULT_CSV):
-    """Return (instance Counter [NOT deduped], per-code skill set, #skills)."""
+    """Return instance counts, per-code skill sets, and the skill count."""
     csv_path = Path(csv_path)
     if not csv_path.exists():
         raise FileNotFoundError(f"Dataset not found: {csv_path}")
@@ -61,8 +40,8 @@ def load_counts(csv_path: Path | str = DEFAULT_CSV):
                 if not raw:
                     continue
                 code = normalize_pattern(raw)
-                instances[code] += 1        # instance-level: do NOT dedupe
-                skills[code].add(key)        # skill-level (for the Skills column)
+                instances[code] += 1
+                skills[code].add(key)
     return instances, skills, len(skillset)
 
 
@@ -94,8 +73,7 @@ def main():
 
     print("-" * len(header))
     print(f"{'TOTAL':<18}{'':<5}{'':<38}{'':<6}{total:>5}{100.0:>6.1f}%{n_skills:>8}")
-    print("\n(Inst = non-deduped instances = paper taxonomy Count column;"
-          " Skills = per-skill, matches the co-occurrence diagonal.)")
+    print("\n(Inst = instance count; Skills = per-skill count.)")
 
     extra = sorted(c for c in instances if c not in TAXONOMY)
     if extra:

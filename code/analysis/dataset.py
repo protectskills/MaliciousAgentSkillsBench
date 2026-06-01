@@ -1,9 +1,4 @@
-"""Loader for the released confirmed-malicious dataset.
-
-Reads ``data/malicious_skills.csv`` and returns, for each of the 157 confirmed
-malicious skills, the set of canonical attack-pattern codes it exhibits. This
-is the shared input for both ``cooccurrence.py`` and ``hypothesis_tests.py``.
-"""
+"""Load normalized attack-pattern data from ``data/malicious_skills.csv``."""
 
 from __future__ import annotations
 
@@ -17,8 +12,6 @@ from patterns import (
     normalize_pattern,
 )
 
-# Default location of the released CSV relative to this file:
-# code/analysis/dataset.py -> ../../data/malicious_skills.csv
 DEFAULT_CSV = Path(__file__).resolve().parents[2] / "data" / "malicious_skills.csv"
 
 
@@ -31,13 +24,7 @@ class Skill:
     severities: list[int] = field(default_factory=list)
 
     def severity_score(self) -> float:
-        """Skill severity = mean of its per-instance, analyst-assigned severity
-        ratings. The paper's H2 test averages the CRITICAL/HIGH/MEDIUM/LOW rating
-        labeled for each vulnerability instance (see the per-instance ``Severity``
-        column of malicious_skills.csv, aligned one-to-one with ``Pattern``).
-        Falls back to the max per-pattern taxonomy tier only when the per-instance
-        ``Severity`` column is absent.
-        """
+        """Return the mean instance severity or the highest taxonomy fallback."""
         if self.severities:
             return sum(self.severities) / len(self.severities)
         scores = [
@@ -94,8 +81,7 @@ def load_skills(csv_path: Path | str = DEFAULT_CSV, canonical_only: bool = False
 
 
 def present_codes(skills: list[Skill], canonical_only: bool = False) -> list[str]:
-    """Return codes present in the data, in canonical display order, with any
-    unexpected/unknown codes appended at the end (sorted)."""
+    """Return present codes in display order."""
     from patterns import CANONICAL_ORDER
 
     seen = set()
@@ -103,7 +89,6 @@ def present_codes(skills: list[Skill], canonical_only: bool = False) -> list[str
         seen |= s.codes
 
     ordered: list[str] = [c for c in CANONICAL_ORDER if c in seen]
-    # Any code not accounted for (unknown scanner label) appended last.
     known = set(ordered)
     ordered += sorted(c for c in seen if c not in known)
     return ordered
