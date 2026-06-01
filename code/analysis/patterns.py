@@ -1,25 +1,4 @@
-"""Single source of truth for the attack-pattern taxonomy used in RQ2 analysis.
-
-This module mirrors the 14-pattern taxonomy from the paper (Table:
-"Attack Technique Taxonomy" and Appendix "Attack Taxonomy MITRE ATT&CK
-Mapping") and provides the mapping from the human-readable pattern names used
-in the released ``data/malicious_skills.csv`` to the canonical pattern codes
-(E*, P*, PE*, SC*).
-
-The released CSV labels each confirmed malicious skill with a semicolon-
-separated ``Pattern`` column (scanner-facing display names) plus an aligned
-``Severity`` column (one CRITICAL/HIGH/MEDIUM/LOW rating per token). Pattern
-tokens repeat once per vulnerability instance, so one file supports two
-granularities: summed WITHOUT dedup it reproduces the paper's 632 instance-level
-taxonomy counts (``taxonomy_counts.py``); deduped per skill it drives the
-co-occurrence matrix and the Fisher / severity tests (``cooccurrence.py``,
-``hypothesis_tests.py``). The scripts normalize display names to the canonical
-codes below.
-
-Note on coverage: of the 14 defined patterns, E4 (Network Reconnaissance) is
-absent from every confirmed malicious skill (see paper Section 4), so it has
-zero rows in the released CSV.
-"""
+"""Attack-pattern taxonomy and CSV label normalization."""
 
 from __future__ import annotations
 
@@ -29,7 +8,7 @@ from dataclasses import dataclass
 @dataclass(frozen=True)
 class Pattern:
     code: str            # canonical code, e.g. "E1"
-    name: str            # paper display name
+    name: str            # display name
     phase: str           # kill chain phase
     severity: str        # CRITICAL | HIGH | MEDIUM | LOW
     mitre: str           # MITRE ATT&CK technique id + name
@@ -38,8 +17,7 @@ class Pattern:
 # Severity tier -> numeric score (used by the Mann-Whitney severity test).
 SEVERITY_SCORE = {"CRITICAL": 4, "HIGH": 3, "MEDIUM": 2, "LOW": 1}
 
-# Canonical 14-pattern taxonomy (paper Table "Attack Technique Taxonomy" +
-# Appendix MITRE mapping + Appendix "Severity Assignment Criteria").
+# Canonical attack-pattern taxonomy.
 TAXONOMY: dict[str, Pattern] = {
     p.code: p
     for p in [
@@ -60,7 +38,7 @@ TAXONOMY: dict[str, Pattern] = {
     ]
 }
 
-# Kill chain phase ordering (paper taxonomy table, top to bottom).
+# Kill chain phase ordering.
 PHASE_ORDER = [
     "Reconnaissance",
     "Credential Access",
@@ -70,7 +48,7 @@ PHASE_ORDER = [
     "Impact",
 ]
 
-# Canonical display order for matrices/figures: group by kill chain phase.
+# Matrix and figure display order.
 CANONICAL_ORDER = [
     "E3", "E4",            # Reconnaissance
     "E2", "PE3",           # Credential Access
@@ -80,8 +58,7 @@ CANONICAL_ORDER = [
     "P1", "P4", "PE1", "PE2",  # Impact
 ]
 
-# Mapping from the released CSV's display names to canonical codes.
-# Source: scanner display names in data/malicious_skills.csv `Pattern` column.
+# CSV label normalization.
 NAME_TO_CODE: dict[str, str] = {
     "External Transmission": "E1",
     "Network sniffing / Credential theft": "E2",
@@ -89,8 +66,6 @@ NAME_TO_CODE: dict[str, str] = {
     "Network Reconnaissance": "E4",
     "Instruction Override": "P1",
     "Hidden Instructions": "P2",
-    # P3 in the paper is "Context Leakage and Data Exfiltration"; the scanner
-    # emits the two facets as separate labels that both map to P3.
     "Context Leakage": "P3",
     "Data Exfiltration": "P3",
     "Behavior Manipulation": "P4",
@@ -104,12 +79,7 @@ NAME_TO_CODE: dict[str, str] = {
 
 
 def normalize_pattern(name: str) -> str:
-    """Map a raw CSV pattern label to its canonical code.
-
-    Unknown labels are returned verbatim so that input is never silently
-    dropped; such labels surface in the output and can be added to
-    ``NAME_TO_CODE`` if a registry introduces a new scanner name.
-    """
+    """Map a raw CSV pattern label to its canonical code."""
     return NAME_TO_CODE.get(name.strip(), name.strip())
 
 

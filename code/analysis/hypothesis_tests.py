@@ -1,25 +1,5 @@
 #!/usr/bin/env python3
-"""Hypothesis-testing scripts (paper RQ2 / Section 5.4 + Appendix
-"Statistical Analysis Details").
-
-Reproduces, from the released ``data/malicious_skills.csv``, the statistical
-tests the paper uses to characterize attack archetypes:
-
-  H1  Fisher's exact test for the E2 (Credential Harvesting) <-> E1 (External
-      Transmission) association  -> "Data Thieves" exfiltration chain.
-  AC  Fisher's exact test for the SC2 (Remote Script Execution) <-> P1
-      (Instruction Override) *anti*-correlation that splits Data Thieves from
-      Agent Hijackers.
-  EV  Fisher's exact test for the P2 (Hidden Instructions) <-> SC3 (Obfuscated
-      Code) evasion association.
-  ALL All-pairs Fisher's exact tests with Bonferroni correction (alpha = 0.05/k).
-  H2  Mann-Whitney U test: severity with vs. without prompt injection (P1/P2).
-      Each skill's severity is the mean of its per-instance CRITICAL/HIGH/
-      MEDIUM/LOW ratings (the ``Severity`` column of malicious_skills.csv).
-
-Each test prints its contingency table / statistics and a PASS/FAIL against the
-configured alpha so the published claims can be checked at a glance. A machine-
-readable summary is written to ``--outdir/hypothesis_tests.json``.
+"""Run the RQ2 Fisher and Mann-Whitney hypothesis tests.
 
 Usage:
     python3 hypothesis_tests.py
@@ -78,7 +58,7 @@ def pair_test(skills, a, b):
     both, a_only, b_only, neither = contingency(skills, a, b)
     table = [[both, a_only], [b_only, neither]]
     _, p = fisher_exact(table, alternative="two-sided")
-    # Conditional MLE odds ratio + exact CI (matches the paper's reported OR/CI).
+    # Conditional MLE odds ratio with exact confidence interval.
     try:
         res = conditional_odds_ratio(table, kind="conditional")
         orr = float(res.statistic)
@@ -106,8 +86,7 @@ def co(skills, a, b):
 
 
 def proportion_ci(k, n, z=1.96):
-    """Wald 95% CI for a proportion, in percent (matches the paper's main-text
-    CIs, e.g. E2&E1 = 36.9% [29.4%, 44.4%])."""
+    """Return a Wald 95% confidence interval in percent."""
     import math
     p = k / n
     half = z * math.sqrt(p * (1 - p) / n)
@@ -174,7 +153,7 @@ def main():
 
     results: dict = {"n_skills": len(skills), "alpha": args.alpha, "pairwise": {}}
 
-    banner("Named hypotheses (paper Section 5.4 / Appendix)")
+    banner("Named hypotheses")
     named = [
         ("H1 (Data Thieves exfil chain)", "E2", "E1"),
         ("AC (Data Thieves vs Agent Hijackers anti-correlation)", "SC2", "P1"),
@@ -189,7 +168,7 @@ def main():
         else:
             print(f"{label}: {a} or {b} absent in this dataset -> skipped\n")
 
-    banner("Attack archetypes (Section 5.4)")
+    banner("Attack archetypes")
     n = len(skills)
     dt = sum(1 for s in skills if "SC2" in s.codes and "P1" not in s.codes)
     ah = sum(1 for s in skills if "P1" in s.codes and "SC2" not in s.codes)
@@ -202,9 +181,6 @@ def main():
     results["archetypes"] = {"data_thieves": dt, "agent_hijackers": ah}
 
     banner("All-pairs Fisher's exact tests with Bonferroni correction")
-    # Bonferroni divisor uses the full 14-pattern taxonomy (paper's C(14,2)=91),
-    # so patterns absent from the released set (e.g. E4, 0 skills) still count
-    # toward the correction, matching the paper's reported pair count.
     pair_codes = list(TAXONOMY)
     pairs = list(itertools.combinations(pair_codes, 2))
     k = len(pairs)

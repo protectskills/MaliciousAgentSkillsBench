@@ -1,17 +1,5 @@
 #!/usr/bin/env python3
-"""Co-occurrence matrix generation (paper RQ2 / Section 5.4).
-
-Reproduces, from the released ``data/malicious_skills.csv``:
-
-  * the pattern co-occurrence count matrix (Appendix Table "Pattern
-    Co-occurrence Matrix"), where the diagonal is the number of skills
-    exhibiting each pattern and off-diagonal cells count skills exhibiting
-    both patterns;
-  * the conditional-probability matrix  P(P_j | P_i)  (Eq. "cond_prob");
-  * the odds-ratio matrix  OR(P_i, P_j)  (Eq. "odds_ratio");
-  * the phi-coefficient matrix; and
-  * the co-occurrence heatmap for the five patterns in the paper figure
-    (E1, E2, P1, P4, SC2; fixed via ``FIGURE_CODES``).
+"""Generate pattern co-occurrence matrices and a heatmap.
 
 Outputs (written under --outdir, default ``analysis_output/cooccurrence``):
     cooccurrence_counts.csv        Symmetric count matrix (diagonal = totals).
@@ -119,14 +107,12 @@ def write_matrix(path: Path, codes, matrix, fmt="%g"):
     path.write_text("\n".join(lines) + "\n")
 
 
-# Patterns shown in the published figure (Figure "Pattern co-occurrence matrix
-# (five most prevalent patterns)").
+# Patterns shown in the heatmap.
 FIGURE_CODES = ["E1", "E2", "P1", "P4", "SC2"]
 
 
 def render_heatmap(path_stem: Path, codes, counts):
-    """Render the co-occurrence heatmap for the five patterns in the paper Figure
-    'Pattern co-occurrence matrix (five most prevalent patterns)'."""
+    """Render the co-occurrence heatmap."""
     import matplotlib
 
     matplotlib.use("Agg")
