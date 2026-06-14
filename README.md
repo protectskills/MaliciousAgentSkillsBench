@@ -55,9 +55,9 @@ every Tier 2 skill is in Tier 1. The 157 confirmed malicious skills are therefor
 
 | Source | Repos | Tier 1 (All) | Tier 2 (Suspicious) | Tier 3 (Malicious) |
 |--------|-------|--------------|---------------------|--------------------|
-| skills.rest | 3,217 | 25,187 | 814 | 21 |
-| skillsmp.com | 10,373 | 73,193 | 3,473 | 136 |
-| **Total** | **13,590** | **98,380** | **4,287** | **157** |
+| skills.rest | 2,337 | 25,187 | 814 | 21 |
+| skillsmp.com | 8,909 | 73,193 | 3,473 | 136 |
+| **Total** | **11,246** | **98,380** | **4,287** | **157** |
 
 Tiers 2 and 3 are **nested** (Tier 3 ⊆ Tier 2 ⊆ Tier 1), so the columns are not
 additive. In `skills_dataset.csv` the `classification` column instead uses three
