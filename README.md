@@ -285,10 +285,14 @@ included at `code/executor/nova-tracer/LICENSE`.
 ## Citation
 
 ```bibtex
-@misc{malicious_agent_skills_bench,
-  title={“Do Not Mention This to the User”: Detecting and Understanding Malicious Agent Skills},
-  author={Anonymous},
-  year={2026},
+@misc{MaliciousAgentSkillsBench,
+      title={"Do Not Mention This to the User": Detecting and Understanding Malicious Agent Skills in the Wild}, 
+      author={Yi Liu and Zhihao Chen and Yanjun Zhang and Gelei Deng and Yuekang Li and Jianting Ning and Leo Yu Zhang},
+      year={2026},
+      eprint={2602.06547},
+      archivePrefix={arXiv},
+      primaryClass={cs.CR},
+      url={https://arxiv.org/abs/2602.06547}, 
 }
 ```
 
