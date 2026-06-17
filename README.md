@@ -1,8 +1,28 @@
-# "Do Not Mention This to the User": Detecting and Understanding Malicious Agent Skills
+# "Do Not Mention This to the User": Detecting and Understanding Malicious Agent Skills in the Wild
 
-![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)
+[![USENIX Security: 2026](https://img.shields.io/badge/USENIX%20Security-2026-red.svg)](https://www.usenix.org/conference/usenixsecurity26)
+[![arXiv: 2602.06547](https://img.shields.io/badge/arXiv-2602.06547-orange.svg)](https://arxiv.org/abs/2602.06547)
+[![dataset: HuggingFace](https://img.shields.io/badge/%F0%9F%A4%97%20dataset-HuggingFace-yellow.svg)](https://huggingface.co/datasets/ProtectSkills/MaliciousAgentSkillsBench)
+[![archive: Zenodo](https://img.shields.io/badge/archive-Zenodo-blue.svg)](https://doi.org/10.5281/zenodo.20285751)
+[![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-This repository contains a comprehensive security benchmark dataset and evaluation framework for Claude Code Agent Skills. The paper reports a **three-tiered, nested** dataset of __98,380 skills__ from two major platforms (skills.rest and skillsmp.com): **4,287 statically-flagged suspicious candidates** (Tier 2), of which **157 are behaviorally-confirmed malicious skills** (Tier 3). The 157 confirmed skills are a verified **subset of** the 4,287 candidates — not a separate group — and the candidates are themselves a subset of the 98,380-skill snapshot.
+This repository contains a comprehensive security benchmark dataset and evaluation framework for Claude Code Agent Skills, introduced in our USENIX Security 2026 paper [*"Do Not Mention This to the User": Detecting and Understanding Malicious Agent Skills in the Wild*](https://arxiv.org/abs/2602.06547). The paper reports a **three-tiered, nested** dataset of __98,380 skills__ from two major platforms (skills.rest and skillsmp.com): **4,287 statically-flagged suspicious candidates** (Tier 2), of which **157 are behaviorally-confirmed malicious skills** (Tier 3). The 157 confirmed skills are a verified **subset of** the 4,287 candidates — not a separate group — and the candidates are themselves a subset of the 98,380-skill snapshot.
+
+## Citation
+
+If you use this dataset or framework, please cite:
+
+```bibtex
+@misc{MaliciousAgentSkillsBench,
+      title={"Do Not Mention This to the User": Detecting and Understanding Malicious Agent Skills in the Wild}, 
+      author={Yi Liu and Zhihao Chen and Yanjun Zhang and Gelei Deng and Yuekang Li and Jianting Ning and Leo Yu Zhang},
+      year={2026},
+      eprint={2602.06547},
+      archivePrefix={arXiv},
+      primaryClass={cs.CR},
+      url={https://arxiv.org/abs/2602.06547}, 
+}
+```
 
 ## Project Structure
 
@@ -46,9 +66,11 @@ The code and data in this repository are intended exclusively for:
 
 ## Data
 
+The benchmark CSVs are in [`data/`](data/) and are also published on Hugging Face at [`ProtectSkills/MaliciousAgentSkillsBench`](https://huggingface.co/datasets/ProtectSkills/MaliciousAgentSkillsBench) (loadable via the 🤗 `datasets` library).
+
 ### Dataset Statistics
 
-The dataset is **three-tiered and nested**, matching Table 1 of the paper: every
+The dataset is **three-tiered and nested**, matching Table 2 of the paper: every
 Tier 3 (confirmed malicious) skill is also a Tier 2 (suspicious candidate), and
 every Tier 2 skill is in Tier 1. The 157 confirmed malicious skills are therefore
 **included in** the 4,287 suspicious candidates, not counted on top of them.
@@ -281,20 +303,6 @@ The goal of this work is to raise awareness of AI agent security risks and infor
 The dynamic execution sandbox vendors a runtime subset of Nova-tracer under
 `code/executor/nova-tracer`. Nova-tracer is MIT licensed; its license is
 included at `code/executor/nova-tracer/LICENSE`.
-
-## Citation
-
-```bibtex
-@misc{MaliciousAgentSkillsBench,
-      title={"Do Not Mention This to the User": Detecting and Understanding Malicious Agent Skills in the Wild}, 
-      author={Yi Liu and Zhihao Chen and Yanjun Zhang and Gelei Deng and Yuekang Li and Jianting Ning and Leo Yu Zhang},
-      year={2026},
-      eprint={2602.06547},
-      archivePrefix={arXiv},
-      primaryClass={cs.CR},
-      url={https://arxiv.org/abs/2602.06547}, 
-}
-```
 
 ## License
 
