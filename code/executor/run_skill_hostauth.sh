@@ -15,6 +15,11 @@ RISK_LEVEL="${5:-unknown}"
 IN_PLACE_LOG="${6:-false}"
 
 USE_NOVA="${USE_NOVA:-true}"
+# In-container ptrace is unreliable in the Docker Desktop VM on macOS, so default
+# syscall tracing off there; Linux keeps it on. Override with USE_STRACE.
+STRACE_DEFAULT=true
+[ "$(uname -s)" = "Darwin" ] && STRACE_DEFAULT=false
+USE_STRACE="${USE_STRACE:-$STRACE_DEFAULT}"
 NOVA_BLOCK="${NOVA_BLOCK:-false}"
 NOVA_PROVIDER="${NOVA_PROVIDER:-tracer}"
 NOVA_PROFILE="${NOVA_PROFILE:-record}"
@@ -250,6 +255,7 @@ timeout --kill-after=10s "${HOST_TIMEOUT}s" "${DOCKER_CMD_ARRAY[@]}" run --rm -i
     -e USER_PROMPT="$USER_PROMPT" \
     -e TEST_DIR="$TEST_DIR_MOUNT" \
     -e USE_NOVA="$USE_NOVA" \
+    -e USE_STRACE="$USE_STRACE" \
     -e NOVA_BLOCK="$NOVA_BLOCK" \
     -e NOVA_PROVIDER="$NOVA_PROVIDER" \
     -e NOVA_PROFILE="$NOVA_PROFILE" \
@@ -391,14 +397,29 @@ echo "=========================================="
 
 STRACE_LOG="$TEST_DIR/strace.log"
 STRACE_OPTS="-f -s 2000 -e trace=open,openat,creat,write,unlink,rename,mkdir,rmdir,execve,connect,accept,sendto,recvfrom"
+CLAUDE_RC_FILE="/tmp/claude_exit_code"
+rm -f "$CLAUDE_RC_FILE"
+
+# Syscall tracing is optional; the command under test owns the run status.
+# Take the exit code from Claude, and allow USE_STRACE=false to skip tracing.
+INNER_CMD="cd '$APPUSER_HOME' && timeout '${EXEC_TIMEOUT}s' claude --print --dangerously-skip-permissions \"\$(cat '$PROMPT_FILE')\"; echo \$? > '$CLAUDE_RC_FILE'"
 
 set +e
-strace $STRACE_OPTS -o "$STRACE_LOG" \
-    su appuser -c "cd '$APPUSER_HOME' && timeout '${EXEC_TIMEOUT}s' claude --print --dangerously-skip-permissions \"\$(cat '$PROMPT_FILE')\"" \
-    </dev/null 2>&1 | tee -a "$TEST_DIR/claude_output.txt"
-PIPE_STATUS=("${PIPESTATUS[@]}")
+if [ "${USE_STRACE:-true}" = "true" ] && command -v strace >/dev/null 2>&1; then
+    strace $STRACE_OPTS -o "$STRACE_LOG" \
+        su appuser -c "$INNER_CMD" \
+        </dev/null 2>&1 | tee -a "$TEST_DIR/claude_output.txt"
+else
+    su appuser -c "$INNER_CMD" </dev/null 2>&1 | tee -a "$TEST_DIR/claude_output.txt"
+fi
 set -e
-EXIT_CODE="${PIPE_STATUS[0]}"
+if [ -s "$CLAUDE_RC_FILE" ]; then
+    EXIT_CODE="$(tr -dc '0-9' < "$CLAUDE_RC_FILE")"
+    EXIT_CODE="${EXIT_CODE:-1}"
+else
+    EXIT_CODE=1
+fi
+rm -f "$CLAUDE_RC_FILE"
 
 if [ "$EXIT_CODE" -eq 124 ]; then
     echo "Warning: Execution timeout (${EXEC_TIMEOUT}s)" | tee -a "$TEST_DIR/claude_output.txt"

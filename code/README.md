@@ -105,10 +105,21 @@ code/                                 # This directory
 - GitHub token (optional, but recommended for public repository downloads at scale)
 
 **For LLM triage and dynamic execution:**
-- Claude Code CLI login
+- Claude Code CLI, installed and **logged in** — see the official docs:
+  https://docs.claude.com/en/docs/claude-code . Verify with `claude --version`
+  and `claude --print "hello"`. The executor reads `~/.claude/.credentials.json`;
+  use a disposable login for untrusted skills.
+- GNU `timeout` (coreutils) on `PATH` — the host-side execution timeout. Bundled
+  on Linux; on macOS it ships as `gtimeout` via `brew install coreutils`, so
+  expose it as `timeout` (e.g. add the coreutils `gnubin` directory to `PATH`).
+- `jq` — only for the *optional* Claude Code triage (steps 07–08). It is a system
+  package (`brew install jq` / `apt install jq`), not a `pip` dependency.
 
 **For Docker-based execution:**
-- Docker (required for sandboxed skill execution)
+- Docker (required for sandboxed skill execution). `strace`, `tcpdump`, and the
+  NOVA hooks run *inside* the sandbox image, so the host does not need them. Set
+  `USE_STRACE=false` to skip syscall tracing if your Docker runtime restricts
+  `ptrace`; packet capture, filesystem diffs, and NOVA evidence are still collected.
 
 **For default crawl path:**
 - SkillsMP API key — sign up or log in at https://skillsmp.com and generate the key from your account settings (sent as a Bearer token to the SkillsMP search API)
