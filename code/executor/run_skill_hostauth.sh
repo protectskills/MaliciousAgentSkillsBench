@@ -261,7 +261,7 @@ timeout --kill-after=10s "${HOST_TIMEOUT}s" "${DOCKER_CMD_ARRAY[@]}" run --rm -i
     -e NOVA_PROFILE="$NOVA_PROFILE" \
     -e EXEC_TIMEOUT="$TIMEOUT" \
     -e EXEC_REPORT_MODE="$EXEC_REPORT_MODE" \
-    "${SETTINGS_ENV_ARGS[@]}" \
+    "${SETTINGS_ENV_ARGS[@]+"${SETTINGS_ENV_ARGS[@]}"}" \
     "$DOCKER_IMAGE" bash -s <<'CONTAINER_SCRIPT'
 set -euo pipefail
 

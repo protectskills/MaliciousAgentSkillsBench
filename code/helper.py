@@ -55,7 +55,7 @@ DEFAULTS = {
     "DOCKER_IMAGE": "ghcr.io/protectskills/claude-skill-sandbox:lite",
     "NODE_MAJOR": "22",
     "EXEC_WORKERS": "1",
-    "EXEC_TIMEOUT": "240",
+    "EXEC_TIMEOUT": "600",
     "EXEC_REPORT_MODE": "false",
     "EXEC_REPORT_TIMEOUT": "480",
     "RETRY_TIMEOUT_ARTIFACTS": "false",
