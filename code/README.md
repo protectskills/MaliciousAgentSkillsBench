@@ -109,6 +109,12 @@ code/                                 # This directory
   https://docs.claude.com/en/docs/claude-code . Verify with `claude --version`
   and `claude --print "hello"`. The executor reads `~/.claude/.credentials.json`;
   use a disposable login for untrusted skills.
+  - *No subscription?* Use an API key instead of an interactive login: put it in
+    `~/.claude/settings.json` under an `env` block, e.g.
+    `{"env": {"ANTHROPIC_API_KEY": "sk-..."}}`. Any Anthropic-compatible endpoint
+    works the same way — add `ANTHROPIC_BASE_URL` and `ANTHROPIC_MODEL` next to the
+    key (e.g. a GLM endpoint with `glm-4.6`). The executor forwards these into the
+    sandbox, so E2/E3 and the CC triage run with any such key or model.
 - GNU `timeout` (coreutils) on `PATH` — the host-side execution timeout. Bundled
   on Linux; on macOS it ships as `gtimeout` via `brew install coreutils`, so
   expose it as `timeout` (e.g. add the coreutils `gnubin` directory to `PATH`).
@@ -374,6 +380,11 @@ outside the crawled dataset, the helper also provides `queue-skills`,
 `exec-queue`, and `exec-dir` subcommands; run `python3 helper.py --help` for
 their options. Adding new skills only requires regenerating the queue; the
 image does not need to be rebuilt.
+
+A bundled, endpoint-defanged malicious sample (matching a confirmed skill from
+the paper) is provided under `samples/` for reproducing end-to-end detection:
+run `./samples/run_detection.sh` (or `python3 helper.py exec-dir samples/malicious`).
+See `samples/README.md`.
 
 ## Configuration
 

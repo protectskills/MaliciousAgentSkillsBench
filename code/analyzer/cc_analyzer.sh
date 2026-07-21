@@ -10,7 +10,7 @@ set -e
 OUTPUT_SUFFIX="_audit.json"
 JOBS=${CC_JOBS:-10}
 MAX_RETRIES=${CC_MAX_RETRIES:-3}
-CC_MODEL=${CC_MODEL:-claude-sonnet-4-6}
+CC_MODEL=${CC_MODEL:-haiku}
 
 # Colors for output
 export GREEN='\033[0;32m'

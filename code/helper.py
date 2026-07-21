@@ -45,7 +45,7 @@ DEFAULTS = {
     "ENABLE_CC_ANALYSIS": "false",
     "CC_RISK_LEVELS": "low medium high critical safe",
     "CC_QUEUE_LIMIT": "3",
-    "CC_MODEL": "claude-sonnet-4-6",
+    "CC_MODEL": "haiku",
     "CC_JOBS": "1",
     "RUN_FROM_CATEGORIES": "SUSPICIOUS MALICIOUS SAFE",
     "RUN_FROM_RISKS": "critical high medium low safe",
