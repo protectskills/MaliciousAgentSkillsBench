@@ -10,7 +10,7 @@ set -e
 OUTPUT_SUFFIX="_audit.json"
 JOBS=${CC_JOBS:-10}
 MAX_RETRIES=${CC_MAX_RETRIES:-3}
-CC_MODEL=${CC_MODEL:-claude-sonnet-4-6}
+CC_MODEL=${CC_MODEL:-haiku}
 
 # Colors for output
 export GREEN='\033[0;32m'
@@ -180,14 +180,18 @@ except:
 import json, os, sys
 
 data = json.load(sys.stdin)
-data.setdefault('metadata', {})
-data['metadata'].update({
-    'skill_path': os.environ['SKILL_PATH'],
-    'repo_id': os.environ['REPO_ID'],
-    'skill_name': os.environ['SKILL_NAME'],
-    'risk_level': os.environ['RISK_LEVEL'],
-})
-data.setdefault('skill_path', os.environ['SKILL_PATH'])
+# The model is asked for a JSON object; if it returns an array or other
+# non-object, pass it through unchanged instead of aborting (the missing
+# audit_summary then routes the task to the ERROR bucket for inspection).
+if isinstance(data, dict):
+    data.setdefault('metadata', {})
+    data['metadata'].update({
+        'skill_path': os.environ['SKILL_PATH'],
+        'repo_id': os.environ['REPO_ID'],
+        'skill_name': os.environ['SKILL_NAME'],
+        'risk_level': os.environ['RISK_LEVEL'],
+    })
+    data.setdefault('skill_path', os.environ['SKILL_PATH'])
 print(json.dumps(data, indent=2))
 " <<< "$clean_json")
             local status=$(echo "$clean_json" | jq -r '.audit_summary.intent_alignment_status' | tr -d '[:space:]')
