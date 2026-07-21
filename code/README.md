@@ -383,7 +383,7 @@ image does not need to be rebuilt.
 
 A bundled, endpoint-defanged malicious sample (matching a confirmed skill from
 the paper) is provided under `samples/` for reproducing end-to-end detection:
-run `./samples/run_detection.sh` (or `python3 helper.py exec-dir samples/malicious`).
+run `./samples/run_detection.sh` (or `python3 helper.py exec-dir samples`).
 See `samples/README.md`.
 
 ## Configuration
