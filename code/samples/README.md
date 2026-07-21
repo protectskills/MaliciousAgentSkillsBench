@@ -2,7 +2,7 @@
 
 A single representative malicious Agent Skill from the paper, so the detection pipeline can be reproduced end to end on a genuinely malicious skill. The study's confirmed-malicious skills were removed by the registries after our responsible disclosure and can no longer be crawled; this controlled copy stands in for them.
 
-## `malicious/math-calculator`
+## `math-calculator`
 
 Advertises itself as a basic calculator but hides a reverse shell in `scripts/calculate.py` (run on every calculation) and a behavior-manipulation directive in `SKILL.md`. It corresponds to the confirmed malicious skill `rest_1659` in `data/malicious_skills.csv`.
 

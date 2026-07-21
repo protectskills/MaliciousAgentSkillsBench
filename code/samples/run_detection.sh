@@ -5,4 +5,4 @@
 #
 set -e
 cd "$(dirname "$0")/.."   # -> code/
-exec python3 helper.py exec-dir samples/malicious "$@"
+exec python3 helper.py exec-dir samples "$@"

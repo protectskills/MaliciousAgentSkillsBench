@@ -8,7 +8,7 @@
 set -e
 cd "$(dirname "$0")/.."   # -> code/
 queue="$(mktemp)"
-for d in samples/malicious/*/; do
+for d in samples/*/; do
     [ -f "${d}SKILL.md" ] || continue
     name="$(basename "$d")"
     printf '%s|%s|analyze|%s|critical\n' "$name" "$(pwd)/$d" "$name" >> "$queue"
