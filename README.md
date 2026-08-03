@@ -6,7 +6,17 @@
 [![archive: Zenodo](https://img.shields.io/badge/archive-Zenodo-blue.svg)](https://doi.org/10.5281/zenodo.20285751)
 [![license: MIT](https://img.shields.io/badge/license-MIT-green.svg)](https://opensource.org/licenses/MIT)
 
-This repository contains a comprehensive security benchmark dataset and evaluation framework for Claude Code Agent Skills, introduced in our USENIX Security 2026 paper [*"Do Not Mention This to the User": Detecting and Understanding Malicious Agent Skills in the Wild*](https://arxiv.org/abs/2602.06547). The paper reports a **three-tiered, nested** dataset of __98,380 skills__ from two major platforms (skills.rest and skillsmp.com): **4,287 statically-flagged suspicious candidates** (Tier 2), of which **157 are behaviorally-confirmed malicious skills** (Tier 3). The 157 confirmed skills are a verified **subset of** the 4,287 candidates — not a separate group — and the candidates are themselves a subset of the 98,380-skill snapshot.
+<p align="center">
+  <img src="./figs/usenixbadges-available.png" alt="Artifacts Available" width="90"/>
+  <img src="./figs/usenixbadges-functional.png" alt="Artifacts Functional" width="90"/>
+  <img src="./figs/usenixbadges-reproduced.png" alt="Results Reproduced" width="90"/>
+</p>
+
+This repository contains a comprehensive security benchmark dataset and evaluation framework for Claude Code Agent Skills, introduced in our USENIX Security 2026 paper [*"Do Not Mention This to the User": Detecting and Understanding Malicious Agent Skills in the Wild*](https://arxiv.org/abs/2602.06547) (a copy is included as [`paper.pdf`](./paper.pdf)). The artifact passed the USENIX Security '26 artifact evaluation and was awarded the **Artifacts Available**, **Artifacts Functional**, and **Results Reproduced** badges. The paper reports a **three-tiered, nested** dataset of __98,380 skills__ from two major platforms (skills.rest and skillsmp.com): **4,287 statically-flagged suspicious candidates** (Tier 2), of which **157 are behaviorally-confirmed malicious skills** (Tier 3). The 157 confirmed skills are a verified **subset of** the 4,287 candidates — not a separate group — and the candidates are themselves a subset of the 98,380-skill snapshot.
+
+<p align="center">
+  <img src="./figs/overview.png" alt="Overview: data collection from two registries, three-stage dataset construction (static analysis, dynamic verification, manual annotation), and evaluation" width="95%"/>
+</p>
 
 ## Citation
 
